@@ -1,5 +1,6 @@
 (object entryway -
     name "Entryway"
+    description "A short, square segment of hallway between the interior of the house and the exterior."
     north kitchen
     doors 6
     junk (bedroom 54342 "gjires" )
