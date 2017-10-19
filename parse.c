@@ -57,8 +57,6 @@ void print_list_vert(object_t *parent_obj) {
 }
 
 void print_location(object_t *location) {
-    property_t *p = NULL;
-
     printf("\n**");
     object_property_print(location, PI_NAME);
     printf("**\n");
@@ -253,6 +251,20 @@ object_t* scope_ceiling(gamedata_t *gd, object_t *obj) {
     return obj;
 }
 
+int word_in_property(object_t *obj, int pid, const char *word) {
+    property_t *p = object_property_get(obj, pid);
+    if (!p || p->value.type != PT_ARRAY) {
+        return 0;
+    }
+    int count = 0;
+    for (int i = 0; i < p->value.array_size; ++i) {
+        if (strcmp(word, ((value_t*)p->value.d.ptr)[i].d.ptr) == 0) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 object_t* match_noun(gamedata_t *gd, int *first_word) {
     object_t *obj, *obj_list[16], *match = NULL;
     property_t *prop;
@@ -289,8 +301,11 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
             printf("FOUND: #%d\n", obj->id);
         }
 
+        int strength = word_in_property(gd->search[i], 
+                                        property_number(gd, "vocab"), 
+                                        gd->words[*first_word].word);
         prop = object_property_get(gd->search[i], PI_VOCAB);
-        if (prop && prop->value.d.num == gd->words[*first_word].word_no) {
+        if (strength) {
             printf("   (matched)\n");
             if (match) {
                 printf("   (too many!)\n");
