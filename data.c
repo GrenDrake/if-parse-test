@@ -41,7 +41,18 @@ gamedata_t* parse_file(const char *filename);
 gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
     gd->root = object_create(NULL);
+    gd->symbols = calloc(sizeof(symboltable_t), 1);
     return gd;
+}
+
+unsigned hash_string(const char *text) {
+    unsigned hash = 0x811c9dc5;
+    size_t len = strlen(text);
+    for (size_t i = 0; i < len; ++i) {
+        hash ^= text[i];
+        hash *= 16777619;
+    }
+    return hash;
 }
 
 gamedata_t* load_data() {
@@ -190,15 +201,47 @@ void free_data(gamedata_t *gd) {
 }
 
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
-    object_t *obj = gd->root->first_child;
-    while (obj) {
-        property_t *prop = object_property_get(obj, PI_IDENT);
-        if (prop) {
-            if (prop->value.type == PT_STRING && strcmp(prop->value.d.ptr, ident)) {
-                return obj;
-            }
-        }
-        obj = obj->sibling;
+    symbol_t *symbol = symbol_get(gd, SYM_OBJECT, ident);
+    if (symbol) {
+        return symbol->ptr;
     }
+    return NULL;
+}
+
+char *str_dupl(const char *text) {
+    size_t length = strlen(text);
+    char *new_text = malloc(length + 1);
+    strcpy(new_text, text);
+    return new_text;
+}
+
+void symbol_add(gamedata_t *gd, const char *name, int type, void *value) {
+    symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
+    symbol->name = str_dupl(name);
+    symbol->type = type;
+    symbol->ptr = value;
+    
+    unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
+    if (gd->symbols->buckets[hashcode] != NULL) {
+        symbol->next = gd->symbols->buckets[hashcode];
+    }
+    gd->symbols->buckets[hashcode] = symbol;
+}
+
+symbol_t* symbol_get(gamedata_t *gd, int type, const char *name) {
+    unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
+    
+    if (gd->symbols->buckets[hashcode] == NULL) {
+        return NULL;
+    }
+    
+    symbol_t *symbol = gd->symbols->buckets[hashcode];
+    while (symbol) {
+        if (symbol->type == type && strcmp(symbol->name, name) == 0) {
+            return symbol;
+        }
+        symbol = symbol->next;
+    }
+
     return NULL;
 }

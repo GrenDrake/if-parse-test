@@ -33,12 +33,16 @@ typedef struct LIST {
 } list_t;
 
 
-char *str_dupl(const char *text) {
-    size_t length = strlen(text);
-    char *new_text = malloc(length + 1);
-    strcpy(new_text, text);
-    return new_text;
+void dump_symbol_table(gamedata_t *gd) {
+    for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
+        symbol_t *symbol = gd->symbols->buckets[i];
+        while (symbol) {
+            printf("%s (%d) => %p\n", symbol->name, symbol->type, symbol->ptr);
+            symbol = symbol->next;
+        }
+    }
 }
+
 
 int valid_identifier(int ch) {
     if (isalnum(ch) || ch == '-' || ch == '_') {
@@ -158,6 +162,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
     }
     if (strcmp(prop->text, "-") != 0) {
         object_property_add_string(obj, PI_IDENT, str_dupl(prop->text));
+        symbol_add(gd, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
         obj->parent_name = val->text;
@@ -341,9 +346,12 @@ gamedata_t* parse_file(const char *filename) {
         clist = clist->next;
     }
 
+    dump_symbol_table(gd);
+
     printf("Parenting game objects...\n");
     object_t *curo = gd->root->first_child;
     while (curo) {
+        object_t *next = curo->sibling;
         if (curo->parent_name) {
             object_t *parent = object_get_by_ident(gd, curo->parent_name);
             if (!parent) {
@@ -353,7 +361,7 @@ gamedata_t* parse_file(const char *filename) {
             object_move(curo, parent);
             curo->parent_name = NULL;
         }
-        curo = curo->sibling;
+        curo = next;
     }
 
     // free tokens and lists

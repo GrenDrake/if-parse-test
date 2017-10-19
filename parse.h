@@ -35,9 +35,23 @@
 
 #define GF_ALT  1
 
+#define SYM_OBJECT 0
+
 #define PARSE_MAX_OBJS 64
 #define PARSE_MAX_NOUNS 2
+#define SYMBOL_TABLE_BUCKETS 32
 
+typedef struct SYMBOL_INFO {
+    char *name;
+    int type;
+    void *ptr;
+
+    struct SYMBOL_INFO *next;
+} symbol_t;
+
+typedef struct SYMBOL_TABLE {
+    symbol_t *buckets[SYMBOL_TABLE_BUCKETS];
+} symboltable_t;
 
 typedef struct CMD_TOKEN {
     int word_no;
@@ -90,6 +104,7 @@ typedef struct GAMEDATA {
     action_t *actions;
     object_t *root;
     object_t *player;
+    symboltable_t *symbols;
 
     int quit_game;
     char input[MAX_INPUT_LENGTH];
@@ -124,9 +139,13 @@ int action_add(gamedata_t *gd, action_t *action);
 
 
 gamedata_t *gamedata_create();
+unsigned hash_string(const char *text);
 gamedata_t* load_data();
 void free_data(gamedata_t *gd);
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
+char *str_dupl(const char *text);
+void symbol_add(gamedata_t *gd, const char *name, int type, void *value);
+symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 
 extern const char *vocab[];
 
