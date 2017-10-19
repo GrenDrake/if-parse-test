@@ -170,7 +170,91 @@ int list_size(list_t *list) {
     return count;
 }
 
+int parse_action(gamedata_t *gd, list_t *list) {
+    if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
+            || strcmp(list->child->text,"action") || list->child->next == NULL) {
+        return 0;
+    }
+    
+    list_t *cur = list->child->next;
+    if (cur->type != T_INTEGER) {
+        printf("Action number must be integer.\n");
+        return 0;
+    }
+    int code = cur->number;
+    cur = cur->next;
+    if (!cur) {
+        printf("Action has no grammar.\n");
+        return 0;
+    }
+    
+    action_t *act = calloc(sizeof(action_t), 1);
+    act->action_code = code;
+    int pos = 0;
 
+    list_t *sub;
+    while (cur) {
+        switch(cur->type) {
+            case T_STRING:
+                act->grammar[pos].type = GT_WORD;
+                act->grammar[pos].value = vocab_index(cur->text);
+                ++pos;
+                break;
+            case T_ATOM:
+                if (strcmp(cur->text, "noun") == 0) {
+                    act->grammar[pos].type = GT_NOUN;
+                    ++pos;
+                } else if (strcmp(cur->text, "any") == 0) {
+                    act->grammar[pos].type = GT_ANY;
+                    ++pos;
+                } else {
+                    printf("Unrecognized grammar token '%s'.\n", cur->text);
+                    return 0;
+                }
+                break;
+            case T_LIST:
+                sub = cur->child;
+                while (sub) {
+                    switch (sub->type) {
+                        case T_STRING:
+                            act->grammar[pos].type = GT_WORD;
+                            act->grammar[pos].value = vocab_index(sub->text);
+                            if (sub->next) {
+                                act->grammar[pos].flags |= GF_ALT;
+                            }
+                            ++pos;
+                            break;
+                        case T_LIST:
+                        case T_INTEGER:
+                            printf("Integer and list values not permitted in action sub-statement.\n");
+                            return 0;
+                    }
+                    sub = sub->next;
+                }
+                break;
+            case T_INTEGER:
+                printf("Integer values not permitted in action statement.\n");
+                return 0;
+        }
+        cur = cur->next;
+    }
+    action_add(gd, act);
+    
+    return 1;
+/*
+    act->grammar[0].type = GT_WORD;
+    act->grammar[0].value = vocab_index("put");
+    act->grammar[1].type = GT_NOUN;
+    act->grammar[2].type = GT_WORD;
+    act->grammar[2].flags = GF_ALT;
+    act->grammar[2].value = vocab_index("on");
+    act->grammar[3].type = GT_WORD;
+    act->grammar[3].value = vocab_index("in");
+    act->grammar[4].type = GT_NOUN;
+    act->action_code = ACT_PUTIN;
+    action_add(gd, act);
+*/
+}
 
 list_t* parse_list(token_t **place) {
     token_t *cur = *place;
@@ -419,6 +503,10 @@ gamedata_t* parse_file(const char *filename) {
 
         if (strcmp(clist->child->text, "object") == 0) {
             if (!parse_object(gd, clist)) {
+                return NULL;
+            }
+        } else if (strcmp(clist->child->text, "action") == 0) {
+            if (!parse_action(gd, clist)) {
                 return NULL;
             }
         } else {

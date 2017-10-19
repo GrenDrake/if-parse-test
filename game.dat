@@ -60,3 +60,10 @@
     vocab ( "black" "umbrella" )
 )
 
+(action 0 ( "q" "quit" ) )
+(action 1 ( "get" "take" ) noun )
+(action 2 "drop" noun )
+(action 3 ( "go" "travel" "move" ) any )
+(action 4 ( "inv" "i" "inventory" ) )
+(action 5 ( "look" "l" ) )
+(action 6 "put" noun ( "on" "in" ) noun )

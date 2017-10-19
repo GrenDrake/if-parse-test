@@ -67,6 +67,7 @@ gamedata_t* load_data() {
         return NULL;
     }
 
+/*
     act = calloc(sizeof(action_t), 1);
     act->grammar[0].type = GT_WORD;
     act->grammar[0].flags = GF_ALT;
@@ -129,7 +130,7 @@ gamedata_t* load_data() {
     act->grammar[3].value = vocab_index("in");
     act->grammar[4].type = GT_NOUN;
     act->action_code = ACT_PUTIN;
-    action_add(gd, act);
+    action_add(gd, act);*/
 
     act = calloc(sizeof(action_t), 1);
     act->grammar[0].type = GT_WORD;

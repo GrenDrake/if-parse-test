@@ -256,13 +256,12 @@ int word_in_property(object_t *obj, int pid, const char *word) {
     if (!p || p->value.type != PT_ARRAY) {
         return 0;
     }
-    int count = 0;
     for (int i = 0; i < p->value.array_size; ++i) {
         if (strcmp(word, ((value_t*)p->value.d.ptr)[i].d.ptr) == 0) {
-            ++count;
+            return 1;
         }
     }
-    return count;
+    return 0;
 }
 
 object_t* match_noun(gamedata_t *gd, int *first_word) {
@@ -293,19 +292,15 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
         }
     }
 
+    printf("finding noun for %s\n", gd->words[*first_word].word);
     for (int i = 0; i < gd->search_count; ++i) {
-        prop = object_property_get(gd->search[i], PI_NAME);
-        if (prop) {
-            printf("FOUND: %s\n", (char*)prop->value.d.ptr);
-        } else {
-            printf("FOUND: #%d\n", obj->id);
-        }
+        printf("OBJECT ");
+        object_property_print(gd->search[i], property_number(gd, "name"));
+        printf("\n");
 
-        int strength = word_in_property(gd->search[i], 
-                                        property_number(gd, "vocab"), 
-                                        gd->words[*first_word].word);
-        prop = object_property_get(gd->search[i], PI_VOCAB);
-        if (strength) {
+        if (word_in_property(gd->search[i], 
+                                property_number(gd, "vocab"), 
+                                gd->words[*first_word].word)) {
             printf("   (matched)\n");
             if (match) {
                 printf("   (too many!)\n");

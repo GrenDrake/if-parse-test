@@ -26,6 +26,7 @@
 #define ACT_INVENTORY 4
 #define ACT_LOOK 5
 #define ACT_PUTIN 6
+#define ACT_EXAMINE 7
 
 #define GT_MAX_TOKENS 16
 
