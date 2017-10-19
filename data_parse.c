@@ -28,18 +28,76 @@ typedef struct LIST {
     int number;
     char *text;
     struct LIST *child;
+    struct LIST *last;
 
     struct LIST *next;
 } list_t;
 
+void list_add(list_t *list, list_t *item);
+list_t *list_create();
+void list_free(list_t *list);
+int list_size(list_t *list);
 
-void dump_symbol_table(gamedata_t *gd) {
+void dump_list(FILE *dest, list_t *list) {
+    list_t *pos = list->child;
+    fprintf(dest, "{");
+    while (pos) {
+        switch(pos->type) {
+            case T_LIST:
+                fprintf(dest, " ");
+                dump_list(dest, pos);
+                break;
+            case T_STRING:
+                fprintf(dest, " ~%s~", pos->text);
+                break;
+            case T_ATOM:
+                fprintf(dest, " %s", pos->text);
+                break;
+            case T_INTEGER:
+                fprintf(dest, " %d", pos->number);
+                break;
+            default:
+                fprintf(dest, " [%d: unhandled]", pos->type);
+        }
+        pos = pos->next;
+    }
+    fprintf(dest, " }");
+}
+
+void dump_lists(FILE *fp, list_t *lists) {
+    while(lists) {
+        dump_list(fp, lists);
+        fprintf(fp, "\n");
+        lists = lists->next;
+    }
+}
+
+void dump_symbol_table(FILE *fp, gamedata_t *gd) {
+    fprintf(fp, "==================================================\n");
+    fprintf(fp, "Symbol Name                       Type  Value\n");
+    fprintf(fp, "--------------------------------------------------\n");
     for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
         symbol_t *symbol = gd->symbols->buckets[i];
         while (symbol) {
-            printf("%s (%d) => %p\n", symbol->name, symbol->type, symbol->d.ptr);
+            fprintf(fp, "%-32s  %d     %p\n", symbol->name, symbol->type, symbol->d.ptr);
             symbol = symbol->next;
         }
+    }
+    fprintf(fp, "==================================================\n");
+}
+
+void dump_tokens(FILE *dest, token_t *tokens) {
+    token_t *cur = tokens;
+    while (cur) {
+        fprintf(dest, "%d: ", cur->type);
+        if (cur->type == T_STRING) 
+            fprintf(dest, "~%s~", cur->text);
+        if (cur->type == T_ATOM) 
+            fprintf(dest, "=%s=", cur->text);
+        if (cur->type == T_INTEGER) 
+            fprintf(dest, "%d", cur->number);
+        fprintf(dest, " (%p - %p - %p)\n", cur->prev, cur, cur->next);
+        cur = cur->next;
     }
 }
 
@@ -61,6 +119,43 @@ void token_add(token_t **tokens, token_t *token) {
     }
 }
 
+void token_free(token_t *token) {
+    if (token->type == T_STRING || token->type == T_ATOM) {
+        free(token->text);
+    }
+    free(token);
+}
+
+void list_add(list_t *list, list_t *item) {
+    if (!list || !item) return;
+    if (list->child) {
+        list->last->next = item;
+        list->last = item;
+    } else {
+        list->child = list->last = item;
+    }
+}
+
+list_t *list_create() {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_LIST;
+    return list;
+}
+
+void list_free(list_t *list) {
+    if (list->type == T_LIST) {
+        list_t *sublist = list->child;
+        while (sublist) {
+            list_t *next = sublist->next;
+            list_free(sublist);
+            sublist = next;
+        }
+    } else if (list->type == T_ATOM || list->type == T_STRING) {
+        free(list->text);
+    }
+    free(list);
+}
+
 int list_size(list_t *list) {
     if (list->type != T_LIST || list->child == NULL) {
         return 0;
@@ -75,6 +170,8 @@ int list_size(list_t *list) {
     return count;
 }
 
+
+
 list_t* parse_list(token_t **place) {
     token_t *cur = *place;
 
@@ -84,53 +181,27 @@ list_t* parse_list(token_t **place) {
     }
     cur = cur->next;
 
-    list_t *end_ptr = NULL;
-    list_t *list = calloc(sizeof(list_t), 1);
-    list->type = T_LIST;
+    list_t *list = list_create();
     while (cur && cur->type != T_CLOSE) {
         if (cur->type == T_OPEN) {
             list_t *sublist = parse_list(&cur);
-            if (!list->child) {
-                list->child = sublist;
-                end_ptr = sublist;
-            } else {
-                end_ptr->next = sublist;
-                end_ptr = sublist;
-            }
+            list_add(list, sublist);
         } else {
             if (cur->type == T_INTEGER) {
                 list_t *item = calloc(sizeof(list_t), 1);
                 item->type = T_INTEGER;
                 item->number = cur->number;
-                if (!list->child) {
-                    list->child = item;
-                    end_ptr = item;
-                } else {
-                    end_ptr->next = item;
-                    end_ptr = item;
-                }
+                list_add(list, item);
             } else if (cur->type == T_ATOM) {
                 list_t *item = calloc(sizeof(list_t), 1);
                 item->type = T_ATOM;
                 item->text = str_dupl(cur->text);
-                if (!list->child) {
-                    list->child = item;
-                    end_ptr = item;
-                } else {
-                    end_ptr->next = item;
-                    end_ptr = item;
-                }
+                list_add(list, item);
             } else if (cur->type == T_STRING) {
                 list_t *item = calloc(sizeof(list_t), 1);
                 item->type = T_STRING;
                 item->text = str_dupl(cur->text);
-                if (!list->child) {
-                    list->child = item;
-                    end_ptr = item;
-                } else {
-                    end_ptr->next = item;
-                    end_ptr = item;
-                }
+                list_add(list, item);
             }
             cur = cur->next;
         }
@@ -232,36 +303,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
     return 1;
 }
 
-void print_list(list_t *list) {
-    list_t *pos = list->child;
-    printf("{");
-    while (pos) {
-        switch(pos->type) {
-            case T_LIST:
-                printf(" [LIST: ");
-                print_list(pos);
-                printf("]");
-                break;
-            case T_STRING:
-                printf(" [STR: %s]", pos->text);
-                break;
-            case T_ATOM:
-                printf(" [ATM: %s]", pos->text);
-                break;
-            case T_INTEGER:
-                printf(" [INT: %d]", pos->number);
-                break;
-            default:
-                printf(" [%d: unhandled]", pos->type);
-        }
-        pos = pos->next;
-    }
-    printf(" }");
-}
-
-
 gamedata_t* parse_file(const char *filename) {
-    //  read the data file
     printf("Loading game data...\n");
     FILE *fp = fopen(filename, "rt");
     if (!fp) {
@@ -276,10 +318,9 @@ gamedata_t* parse_file(const char *filename) {
     file[filesize] = 0;
     fclose(fp);
 
-    token_t *tokens = NULL;
 
     printf("Tokenizing game data...\n");
-    // tokenize the source data
+    token_t *tokens = NULL;
     size_t pos = 0;
     while (pos < filesize) {
         if (file[pos] == '(') {
@@ -329,22 +370,13 @@ gamedata_t* parse_file(const char *filename) {
     }
     free(file);
 
+
     // reverse the token list
     while (tokens->prev) {
         tokens = tokens->prev;
     }
 
-//    token_t *cur = tokens;
-//    while (cur) {
-//        printf("%d: ", cur->type);
-//        if (cur->type == T_STRING) printf("~%s~", cur->text);
-//        if (cur->type == T_ATOM) printf("=%s=", cur->text);
-//        if (cur->type == T_INTEGER) printf("%d", cur->number);
-//        printf(" (%p - %p - %p)\n", cur->prev, cur, cur->next);
-//        cur = cur->next;
-//    }
-
-    printf("Parsing game data...\n");
+    printf("Building lists...\n");
     list_t *lists = NULL, *last_list = NULL;
     token_t *list_pos = tokens;
     while (list_pos) {
@@ -361,7 +393,7 @@ gamedata_t* parse_file(const char *filename) {
         }
     }
 
-    printf("Processing game data...\n");
+    printf("Parsing lists...\n");
     gamedata_t *gd = gamedata_create();
     list_t *clist = lists;
     while (clist) {
@@ -382,10 +414,6 @@ gamedata_t* parse_file(const char *filename) {
             if (!parse_object(gd, clist)) {
                 return NULL;
             }
-
-//            printf("%d   ", list_size(clist));
-//            print_list(clist);
-//            printf("\n");
         } else {
             printf("Unknown top level construct %s.\n", clist->child->text);
             return NULL;
@@ -395,7 +423,7 @@ gamedata_t* parse_file(const char *filename) {
     }
 
     printf("Dumpng symbol table...\n");
-    dump_symbol_table(gd);
+    dump_symbol_table(stdout, gd);
 
     printf("Setting object references...\n");
     object_t *curo = gd->root->first_child;
@@ -429,20 +457,19 @@ gamedata_t* parse_file(const char *filename) {
     }
 
     printf("Data loaded. Freeing temporary memory...\n\n");
-    // free tokens and lists
     token_t *next;
     while (tokens) {
         next = tokens->next;
-        free(tokens);
+        token_free(tokens);
         tokens = next;
     }
-    
     list_t *next_list;
     while (lists) {
         next_list = lists->next;
-        free(lists);
+        list_free(lists);
         lists = next_list;
     }
+    
     return gd;
 }
 
