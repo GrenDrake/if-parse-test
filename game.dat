@@ -1,0 +1,13 @@
+(object entryway root
+    name "Entryway"
+    north kitchen 1 2 3 4 45 78 12
+    (the 54342 "gjires" )
+
+    "this" "is" "the" "test"
+)
+(object - entryway
+    name "table"
+    vocab [ "table" ]
+)
+
+(object player entryway )
