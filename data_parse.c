@@ -323,7 +323,13 @@ gamedata_t* parse_file(const char *filename) {
     token_t *tokens = NULL;
     size_t pos = 0;
     while (pos < filesize) {
-        if (file[pos] == '(') {
+        if (file[pos] == '/' && pos+1 < filesize && file[pos+1] == '/') {
+            while (pos < filesize && file[pos] != '\n') {
+                ++pos;
+            }
+        } else if (isspace(file[pos])) {
+            ++pos;
+        } else if (file[pos] == '(') {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_OPEN;
             token_add(&tokens, t);
@@ -365,6 +371,7 @@ gamedata_t* parse_file(const char *filename) {
             t->text = str_dupl(token);
             token_add(&tokens, t);
         } else {
+            printf("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
             ++pos;
         }
     }
