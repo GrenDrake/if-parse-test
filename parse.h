@@ -44,7 +44,10 @@
 typedef struct SYMBOL_INFO {
     char *name;
     int type;
-    void *ptr;
+    union {
+        void *ptr;
+        int value;
+    } d;
 
     struct SYMBOL_INFO *next;
 } symbol_t;
@@ -144,7 +147,8 @@ gamedata_t* load_data();
 void free_data(gamedata_t *gd);
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
 char *str_dupl(const char *text);
-void symbol_add(gamedata_t *gd, const char *name, int type, void *value);
+void symbol_add_value(gamedata_t *gd, const char *name, int type, int value);
+void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value);
 symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 
 extern const char *vocab[];

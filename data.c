@@ -3,6 +3,8 @@
 
 #include "parse.h"
 
+void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
+
 const char *vocab[] = {
     "apricot",
     "drop",
@@ -203,7 +205,7 @@ void free_data(gamedata_t *gd) {
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
     symbol_t *symbol = symbol_get(gd, SYM_OBJECT, ident);
     if (symbol) {
-        return symbol->ptr;
+        return symbol->d.ptr;
     }
     return NULL;
 }
@@ -215,17 +217,30 @@ char *str_dupl(const char *text) {
     return new_text;
 }
 
-void symbol_add(gamedata_t *gd, const char *name, int type, void *value) {
-    symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
-    symbol->name = str_dupl(name);
-    symbol->type = type;
-    symbol->ptr = value;
-    
-    unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
+void symbol_add_core(gamedata_t *gd, symbol_t *symbol) {
+    unsigned hashcode = hash_string(symbol->name) % SYMBOL_TABLE_BUCKETS;
     if (gd->symbols->buckets[hashcode] != NULL) {
         symbol->next = gd->symbols->buckets[hashcode];
     }
     gd->symbols->buckets[hashcode] = symbol;
+}
+
+void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value) {
+    symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
+    symbol->name = str_dupl(name);
+    symbol->type = type;
+    symbol->d.ptr = value;
+    
+    symbol_add_core(gd, symbol);
+}
+
+void symbol_add_value(gamedata_t *gd, const char *name, int type, int value) {
+    symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
+    symbol->name = str_dupl(name);
+    symbol->type = type;
+    symbol->d.value = value;
+    
+    symbol_add_core(gd, symbol);
 }
 
 symbol_t* symbol_get(gamedata_t *gd, int type, const char *name) {

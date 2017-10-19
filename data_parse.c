@@ -37,7 +37,7 @@ void dump_symbol_table(gamedata_t *gd) {
     for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
         symbol_t *symbol = gd->symbols->buckets[i];
         while (symbol) {
-            printf("%s (%d) => %p\n", symbol->name, symbol->type, symbol->ptr);
+            printf("%s (%d) => %p\n", symbol->name, symbol->type, symbol->d.ptr);
             symbol = symbol->next;
         }
     }
@@ -162,7 +162,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
     }
     if (strcmp(prop->text, "-") != 0) {
         object_property_add_string(obj, PI_IDENT, str_dupl(prop->text));
-        symbol_add(gd, prop->text, SYM_OBJECT, obj);
+        symbol_add_ptr(gd, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
         obj->parent_name = val->text;
