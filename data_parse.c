@@ -160,7 +160,8 @@ int parse_object(gamedata_t *gd, list_t *list) {
         object_property_add_string(obj, PI_IDENT, str_dupl(prop->text));
     }
     if (strcmp(val->text, "-") != 0) {
-        object_property_add_string(obj, PI_INITIAL_PARENT, str_dupl(val->text));
+        obj->parent_name = val->text;
+        printf("guv %p %p %s\n", obj->parent_name, val->text, val->text);
     }
     while (prop) {
         if (val == NULL) {
@@ -280,15 +281,15 @@ gamedata_t* parse_file(const char *filename) {
         tokens = tokens->prev;
     }
 
-    token_t *cur = tokens;
-    while (cur) {
-        printf("%d: ", cur->type);
-        if (cur->type == T_STRING) printf("~%s~", cur->text);
-        if (cur->type == T_ATOM) printf("=%s=", cur->text);
-        if (cur->type == T_INTEGER) printf("%d", cur->number);
-        printf(" (%p - %p - %p)\n", cur->prev, cur, cur->next);
-        cur = cur->next;
-    }
+//    token_t *cur = tokens;
+//    while (cur) {
+//        printf("%d: ", cur->type);
+//        if (cur->type == T_STRING) printf("~%s~", cur->text);
+//        if (cur->type == T_ATOM) printf("=%s=", cur->text);
+//        if (cur->type == T_INTEGER) printf("%d", cur->number);
+//        printf(" (%p - %p - %p)\n", cur->prev, cur, cur->next);
+//        cur = cur->next;
+//    }
 
     printf("Parsing game data...\n");
     list_t *lists = NULL, *last_list = NULL;
@@ -340,11 +341,34 @@ gamedata_t* parse_file(const char *filename) {
         clist = clist->next;
     }
 
+    printf("Parenting game objects...\n");
+    object_t *curo = gd->root->first_child;
+    while (curo) {
+        if (curo->parent_name) {
+            object_t *parent = object_get_by_ident(gd, curo->parent_name);
+            if (!parent) {
+                printf("Unknown object name %s.\n", curo->parent_name);
+                return NULL;
+            }
+            object_move(curo, parent);
+            curo->parent_name = NULL;
+        }
+        curo = curo->sibling;
+    }
+
+    // free tokens and lists
     token_t *next;
     while (tokens) {
         next = tokens->next;
         free(tokens);
         tokens = next;
+    }
+    
+    list_t *next_list;
+    while (lists) {
+        next_list = lists->next;
+        free(lists);
+        lists = next_list;
     }
     return gd;
 }

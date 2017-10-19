@@ -12,7 +12,6 @@
 #define PI_WEST 6
 #define PI_VOCAB 7
 #define PI_IDENT 8
-#define PI_INITIAL_PARENT 9
 
 #define PT_INTEGER 0
 #define PT_STRING 1
@@ -78,6 +77,9 @@ typedef struct PROPERTY {
 typedef struct OBJECT {
     int id;
     property_t *properties;
+    
+    const char *parent_name;
+    
     struct OBJECT *parent;
     struct OBJECT *first_child;
     struct OBJECT *sibling;
