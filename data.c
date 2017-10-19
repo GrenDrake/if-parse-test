@@ -67,55 +67,6 @@ gamedata_t* load_data() {
         return NULL;
     }
 
-    // gd->root = object_create(NULL);
-
-    // entryway = object_create(gd->root);
-    // object_property_add_string(entryway, PI_NAME, "Entryway");
-    // obj = object_create(entryway);
-    // object_property_add_string(obj, PI_NAME, "table");
-    // obj = object_create(entryway);
-    // object_property_add_string(obj, PI_NAME, "chair");
-    // obj = object_create(entryway);
-    // object_property_add_string(obj, PI_NAME, "painting");
-    // obj = object_create(entryway);
-    // object_property_add_string(obj, PI_NAME, "fireplace");
-
-    // kitchen = object_create(gd->root);
-    // object_property_add_string(kitchen, PI_NAME, "Kitchen");
-    // object_property_add_string(kitchen, PI_DESC, "A well appointed kitchen, suitable for even the finest tastes.");
-    // obj = object_create(kitchen);
-    // object_property_add_string(obj, PI_NAME, "apricot");
-    // object_property_add_integer(obj, PI_VOCAB, vocab_index("apricot"));
-    // obj = object_create(kitchen);
-    // object_property_add_string(obj, PI_NAME, "turnip");
-    // object_property_add_integer(obj, PI_VOCAB, vocab_index("turnip"));
-    // object_property_add_array(obj, PI_DESC, 3);
-    // property_t *prop = object_property_get(obj, PI_DESC);
-    // ((value_t*)prop->value.d.ptr)[0].type = PT_INTEGER;
-    // ((value_t*)prop->value.d.ptr)[0].d.num = 4;
-    // ((value_t*)prop->value.d.ptr)[1].type = PT_INTEGER;
-    // ((value_t*)prop->value.d.ptr)[1].d.num = 543;
-
-    // bedroom = object_create(gd->root);
-    // object_property_add_string(bedroom, PI_NAME, "Bedroom");
-    // object_property_add_string(bedroom, PI_DESC, "A simple bedroom with a cot visible.");
-
-
-    // object_property_add_object(entryway, PI_NORTH, kitchen);
-    // object_property_add_object(kitchen, PI_NORTH, bedroom);
-    // object_property_add_object(bedroom, PI_NORTH, entryway);
-
-
-    // gd->player = object_create(kitchen);
-    // object_property_add_string(gd->player, PI_NAME, "yourself");
-    // object_property_add_integer(gd->player, PI_VOCAB, vocab_index("me"));
-    // obj = object_create(gd->player);
-    // object_property_add_string(obj, PI_NAME, "clear umbrella");
-    // object_property_add_integer(obj, PI_VOCAB, vocab_index("umbrella"));
-    // obj = object_create(gd->player);
-    // object_property_add_string(obj, PI_NAME, "black umbrella");
-    // object_property_add_integer(obj, PI_VOCAB, vocab_index("umbrella"));
-
     act = calloc(sizeof(action_t), 1);
     act->grammar[0].type = GT_WORD;
     act->grammar[0].flags = GF_ALT;
@@ -208,6 +159,20 @@ object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
         return symbol->d.ptr;
     }
     return NULL;
+}
+
+int property_number(gamedata_t *gd, const char *name) {
+    static int next_id = 1;
+    symbol_t *symbol = symbol_get(gd, SYM_PROPERTY, name);
+    if (!symbol) {
+        symbol = calloc(sizeof(symbol_t), 1);
+        symbol->name = str_dupl(name);
+        symbol->type = SYM_PROPERTY;
+        symbol->d.value = next_id++;
+        symbol_add_core(gd, symbol);
+    }
+
+    return symbol->d.value;
 }
 
 char *str_dupl(const char *text) {

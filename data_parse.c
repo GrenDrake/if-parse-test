@@ -166,13 +166,61 @@ int parse_object(gamedata_t *gd, list_t *list) {
     }
     if (strcmp(val->text, "-") != 0) {
         obj->parent_name = val->text;
-        printf("guv %p %p %s\n", obj->parent_name, val->text, val->text);
     }
+    prop = val->next;
+    if (prop) val = prop->next;
     while (prop) {
         if (val == NULL) {
             printf("Found property without value.\n");
             return 0;
         }
+        if (prop->type != T_ATOM) {
+            printf("Property name must be atom.\n");
+            return 0;
+        }
+        
+        int p_num = property_number(gd, prop->text);
+        if (val->type == T_STRING) {
+            object_property_add_string(obj, p_num, str_dupl(val->text));
+        } else if (val->type == T_ATOM) {
+            object_property_add_string(obj, p_num, str_dupl(val->text));
+            property_t *p = object_property_get(obj, p_num);
+            p->value.type = PT_TMPNAME;
+        } else if (val->type == T_INTEGER) {
+            object_property_add_integer(obj, p_num, val->number);
+        } else if (val->type == T_LIST) {
+            object_property_add_array(obj, p_num, list_size(val));
+            property_t *p = object_property_get(obj, p_num);
+            value_t *arr = p->value.d.ptr;
+            list_t *cur = val->child;
+            int counter = 0;
+            while (cur) {
+                switch(cur->type) {
+                    case T_INTEGER:
+                        arr[counter].type = PT_INTEGER;
+                        arr[counter].d.num = cur->number;
+                        break;
+                    case T_STRING:
+                        arr[counter].type = PT_STRING;
+                        arr[counter].d.ptr = str_dupl(cur->text);
+                        break;
+                    case T_ATOM:
+                        arr[counter].type = PT_TMPNAME;
+                        arr[counter].d.ptr = str_dupl(cur->text);
+                        break;
+                    case T_LIST: 
+                        printf("Nested lists are not permitted in object properties.\n");
+                        break;
+                    default:
+                        printf("WARNING: unhandled array value type %d.\n", cur->type);
+                }
+                ++counter;
+                cur = cur->next;
+            }
+        } else {
+            printf("WARNING: unhandled property type %d.\n", val->type);
+        }
+
         prop = val->next;
         if (prop) {
             val = prop->next;
@@ -335,9 +383,9 @@ gamedata_t* parse_file(const char *filename) {
                 return NULL;
             }
 
-            printf("%d   ", list_size(clist));
-            print_list(clist);
-            printf("\n");
+//            printf("%d   ", list_size(clist));
+//            print_list(clist);
+//            printf("\n");
         } else {
             printf("Unknown top level construct %s.\n", clist->child->text);
             return NULL;
@@ -346,9 +394,10 @@ gamedata_t* parse_file(const char *filename) {
         clist = clist->next;
     }
 
+    printf("Dumpng symbol table...\n");
     dump_symbol_table(gd);
 
-    printf("Parenting game objects...\n");
+    printf("Setting object references...\n");
     object_t *curo = gd->root->first_child;
     while (curo) {
         object_t *next = curo->sibling;
@@ -361,9 +410,25 @@ gamedata_t* parse_file(const char *filename) {
             object_move(curo, parent);
             curo->parent_name = NULL;
         }
+        
+        property_t *p = curo->properties;
+        while (p) {
+            property_t *next = p->next;
+            if (p->value.type == PT_TMPNAME) {
+                object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
+                if (!obj) {
+                    printf("Undefined reference to %s.\n", p->value.d.ptr);
+                    return NULL;
+                }
+                object_property_add_object(curo, p->id, obj);
+            }
+            p = next;
+        }
+        
         curo = next;
     }
 
+    printf("Data loaded. Freeing temporary memory...\n\n");
     // free tokens and lists
     token_t *next;
     while (tokens) {

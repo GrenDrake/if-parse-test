@@ -1,13 +1,61 @@
-(object entryway root
+(object entryway -
     name "Entryway"
-    north kitchen 1 2 3 4 45 78 12
-    (the 54342 "gjires" )
+    north kitchen
+    doors 6
+    junk (bedroom 54342 "gjires" )
 
-    "this" "is" "the" "test"
 )
 (object - entryway
     name "table"
-    vocab [ "table" ]
+    vocab ( "table" )
+)
+(object - entryway
+    name "chair"
+    vocab ( "chair" )
+)
+(object - entryway
+    name "painting"
+    vocab ( "painting" )
+)
+(object - entryway
+    name "fireplace"
+    vocab ( "fireplace" "fire" "place" )
 )
 
-(object player entryway )
+
+(object kitchen -
+    name "Kitchen"
+    description "A well appointed kitchen, suitable for even the finest tastes."
+    north bedroom
+)
+(object - kitchen
+    name "apricot"
+    vocab ( "apricot" )
+)
+(object - kitchen
+    name "turnip"
+    vocab ( "turnip" )
+)
+
+
+(object bedroom -
+    name "Bedroom"
+    description "A simple bedroom with a cot visible."
+    north entryway
+)
+
+
+(object player kitchen
+    name "yourself" 
+    vocab ( "me" )
+)
+
+(object - player 
+    name "clear umbrella"
+    vocab ( "clear" "umbrella" )
+)
+(object - player 
+    name "black umbrella"
+    vocab ( "black" "umbrella" )
+)
+

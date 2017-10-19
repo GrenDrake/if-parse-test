@@ -187,6 +187,19 @@ void testfunc(object_t *obj) {
             case PT_STRING:
                 printf("%p: ~%s~", cur->value.d.ptr, (char*)cur->value.d.ptr);
                 break;
+            case PT_ARRAY: {
+                printf("%p: [%d]", cur->value.d.ptr, cur->value.array_size);
+                value_t *arr = cur->value.d.ptr;
+                for (int i = 0; i < cur->value.array_size; ++i) {
+                    switch(arr[i].type) {
+                        case PT_STRING: printf(" ~%s~", arr[i].d.ptr); break;
+                        case PT_INTEGER: printf(" %d", arr[i].d.num); break;
+                        case PT_OBJECT: printf(" (obj#%d)", ((object_t*)arr[i].d.ptr)->id); break;
+                        default: printf(" (type#%d)", arr[i].type);
+                    }
+                }
+                break; }
+                
         }
         printf("\n");
         cur = cur->next;
@@ -377,23 +390,24 @@ int main() {
     gamedata_t *gd = load_data();
     if (!gd) return 1;
 
-    objectloop_depth_first(gd->root, testfunc);
+//    objectloop_depth_first(gd->root, testfunc);
 
-    // print_location(gd.player->parent);
-    // while (!gd.quit_game) {
-    //     get_line(gd.input, MAX_INPUT_LENGTH-1);
+    gd->player = object_get_by_ident(gd, "player");
+    print_location(gd->player->parent);
+    while (!gd->quit_game) {
+        get_line(gd->input, MAX_INPUT_LENGTH-1);
 
-    //     if (!tokenize(&gd) || !parse(&gd)) {
-    //         continue;
-    //     }
+        if (!tokenize(gd) || !parse(gd)) {
+            continue;
+        }
 
-    //     if (gd.action < 0) {
-    //         printf("Unrecognized command.\n");
-    //         continue;
-    //     }
+        if (gd->action < 0) {
+            printf("Unrecognized command.\n");
+            continue;
+        }
 
-    //     cmd_dispatch[gd.action](&gd);
-    // }
+        cmd_dispatch[gd->action](gd);
+    }
 
     printf("Goodbye!\n\n");
     free_data(gd);

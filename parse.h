@@ -13,10 +13,11 @@
 #define PI_VOCAB 7
 #define PI_IDENT 8
 
-#define PT_INTEGER 0
 #define PT_STRING 1
 #define PT_OBJECT 2
 #define PT_ARRAY 3
+#define PT_INTEGER 4
+#define PT_TMPNAME 99
 
 #define ACT_QUIT  0
 #define ACT_TAKE  1
@@ -36,6 +37,7 @@
 #define GF_ALT  1
 
 #define SYM_OBJECT 0
+#define SYM_PROPERTY 1
 
 #define PARSE_MAX_OBJS 64
 #define PARSE_MAX_NOUNS 2
@@ -146,6 +148,7 @@ unsigned hash_string(const char *text);
 gamedata_t* load_data();
 void free_data(gamedata_t *gd);
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
+int property_number(gamedata_t *gd, const char *name);
 char *str_dupl(const char *text);
 void symbol_add_value(gamedata_t *gd, const char *name, int type, int value);
 void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value);
