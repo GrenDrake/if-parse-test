@@ -70,6 +70,13 @@ char *str_dupl(const char *text) {
     return new_text;
 }
 
+char *str_dupl_left(const char *text, int size) {
+    char *new_text = malloc(size + 1);
+    strncpy(new_text, text, size);
+    new_text[size] = 0;
+    return new_text;
+}
+
 void symbol_add_core(gamedata_t *gd, symbol_t *symbol) {
     unsigned hashcode = hash_string(symbol->name) % SYMBOL_TABLE_BUCKETS;
     if (gd->symbols->buckets[hashcode] != NULL) {
