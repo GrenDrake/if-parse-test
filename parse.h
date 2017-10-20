@@ -140,6 +140,10 @@ void objectloop_depth_first(object_t *root, void (*callback)(object_t *obj));
 void objectloop_free(object_t *obj);
 
 
+void vocab_dump();
+void vocab_raw_add(const char *the_word);
+void vocab_build();
+void vocab_raw_free();
 int vocab_index(const char *word);
 int action_add(gamedata_t *gd, action_t *action);
 
@@ -157,8 +161,5 @@ symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 
 
 gamedata_t* parse_file(const char *filename);
-
-
-extern const char *vocab[];
 
 #endif // PARSE_H

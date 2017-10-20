@@ -33,12 +33,6 @@ typedef struct LIST {
     struct LIST *next;
 } list_t;
 
-typedef struct VOCAB {
-    char *word;
-    struct VOCAB *prev;
-    struct VOCAB *next;
-} vocab_t;
-
 // dumping data
 static void dump_list(FILE *dest, list_t *list);
 static void dump_lists(FILE *fp, list_t *lists);
@@ -58,9 +52,6 @@ static void token_free(token_t *token);
 // tokenizing
 static int valid_identifier(int ch);
 static token_t *tokenize(char *file);
-
-// vocab building
-static void vocab_raw_add(const char *the_word);
 
 // parsing
 static int parse_action(gamedata_t *gd, list_t *list);
@@ -273,54 +264,6 @@ token_t *tokenize(char *file) {
         }
     }
     return tokens;
-}
-
-
-/* ****************************************************************************
- * Vocabulary building
- * ****************************************************************************/
-static vocab_t *vocab_list = NULL;
-static size_t vocab_size = 0;
-void vocab_raw_add(const char *the_word) {
-    vocab_t *word = calloc(sizeof(vocab_t), 1);
-    word->word = str_dupl(the_word);
-    ++vocab_size;
-    
-    printf("added '%s'\n", the_word);
-    
-    if (!vocab_list) {
-        vocab_list = word;
-        return;
-    }
-    
-    if (strcmp(the_word, vocab_list->word) < 0) {
-        word->next = vocab_list;
-        vocab_list = word;
-        return;
-    }
-    if (strcmp(the_word, vocab_list->word) == 0) {
-        free(word->word);
-        free(word);
-        --vocab_size;
-        return;
-    }    
-    
-    vocab_t *cur = vocab_list;
-    while (cur->next) {
-        if (strcmp(the_word, cur->next->word) < 0) {
-            word->next = cur->next;
-            cur->next = word;
-            return;
-        }
-        if (strcmp(the_word, cur->next->word) == 0) {
-            free(word->word);
-            free(word);
-            --vocab_size;
-            return;
-        }    
-        cur = cur->next;
-    }
-    cur->next = word;
 }
 
 
@@ -667,7 +610,9 @@ gamedata_t* parse_file(const char *filename) {
         list_free(lists);
         lists = next_list;
     }
-    
+
+    vocab_build();
+    vocab_dump();
     return gd;
 }
 

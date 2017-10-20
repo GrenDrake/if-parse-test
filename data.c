@@ -5,39 +5,6 @@
 
 static void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
 
-const char *vocab[] = {
-    "apricot",
-    "drop",
-    "e",
-    "east",
-    "get",
-    "go",
-    "i",
-    "in",
-    "inv",
-    "inventory",
-    "l",
-    "look",
-    "me",
-    "move",
-    "n",
-    "north",
-    "on",
-    "player",
-    "put",
-    "q",
-    "quit",
-    "s",
-    "south",
-    "take",
-    "turnip",
-    "w",
-    "walk",
-    "west",
-    "umbrella",
-    0
-};
-
 gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
     gd->root = object_create(NULL);
