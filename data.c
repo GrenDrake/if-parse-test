@@ -3,7 +3,7 @@
 
 #include "parse.h"
 
-void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
+static void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
 
 const char *vocab[] = {
     "apricot",
@@ -38,8 +38,6 @@ const char *vocab[] = {
     0
 };
 
-gamedata_t* parse_file(const char *filename);
-
 gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
     gd->root = object_create(NULL);
@@ -58,89 +56,11 @@ unsigned hash_string(const char *text) {
 }
 
 gamedata_t* load_data() {
-    action_t *act;
-//    object_t *entryway, *kitchen, *bedroom, *obj;
-
     gamedata_t *gd = parse_file("game.dat");
     if (!gd) {
         printf("Error loading game data.\n");
         return NULL;
     }
-
-/*
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].flags = GF_ALT;
-    act->grammar[0].value = vocab_index("quit");
-    act->grammar[1].type = GT_WORD;
-    act->grammar[1].value = vocab_index("q");
-    act->action_code = ACT_QUIT;
-    action_add(gd, act);
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].flags = GF_ALT;
-    act->grammar[0].value = vocab_index("move");
-    act->grammar[1].type = GT_WORD;
-    act->grammar[1].flags = GF_ALT;
-    act->grammar[1].value = vocab_index("go");
-    act->grammar[2].type = GT_WORD;
-    act->grammar[2].value = vocab_index("walk");
-    act->grammar[3].type = GT_ANY;
-    act->action_code = ACT_MOVE;
-    action_add(gd, act);
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].flags = GF_ALT;
-    act->grammar[0].value = vocab_index("i");
-    act->grammar[1].type = GT_WORD;
-    act->grammar[1].flags = GF_ALT;
-    act->grammar[1].value = vocab_index("inv");
-    act->grammar[2].type = GT_WORD;
-    act->grammar[2].value = vocab_index("inventory");
-    act->action_code = ACT_INVENTORY;
-    action_add(gd, act);
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].value = vocab_index("drop");
-    act->grammar[1].type = GT_NOUN;
-    act->action_code = ACT_DROP;
-    action_add(gd, act);
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].flags = GF_ALT;
-    act->grammar[0].value = vocab_index("take");
-    act->grammar[1].type = GT_WORD;
-    act->grammar[1].value = vocab_index("get");
-    act->grammar[2].type = GT_NOUN;
-    act->action_code = ACT_TAKE;
-    action_add(gd, act);
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].value = vocab_index("put");
-    act->grammar[1].type = GT_NOUN;
-    act->grammar[2].type = GT_WORD;
-    act->grammar[2].flags = GF_ALT;
-    act->grammar[2].value = vocab_index("on");
-    act->grammar[3].type = GT_WORD;
-    act->grammar[3].value = vocab_index("in");
-    act->grammar[4].type = GT_NOUN;
-    act->action_code = ACT_PUTIN;
-    action_add(gd, act);*/
-
-    act = calloc(sizeof(action_t), 1);
-    act->grammar[0].type = GT_WORD;
-    act->grammar[0].flags = GF_ALT;
-    act->grammar[0].value = vocab_index("l");
-    act->grammar[1].type = GT_WORD;
-    act->grammar[1].value = vocab_index("look");
-    act->action_code = ACT_LOOK;
-    action_add(gd, act);
-
     return gd;
 }
 
