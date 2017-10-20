@@ -59,6 +59,8 @@ static int parse_action(gamedata_t *gd, list_t *list);
 static list_t* parse_list(token_t **place);
 static int parse_object(gamedata_t *gd, list_t *list);
 
+static int fix_references(gamedata_t *gd);
+
 
 /* ****************************************************************************
  * Dumping data to a stream (for debugging)
@@ -580,34 +582,8 @@ gamedata_t* parse_file(const char *filename) {
     dump_symbol_table(stdout, gd);
 
     printf("Setting object references...\n");
-    object_t *curo = gd->root->first_child;
-    while (curo) {
-        object_t *next = curo->sibling;
-        if (curo->parent_name) {
-            object_t *parent = object_get_by_ident(gd, curo->parent_name);
-            if (!parent) {
-                printf("Unknown object name %s.\n", curo->parent_name);
-                return NULL;
-            }
-            object_move(curo, parent);
-            curo->parent_name = NULL;
-        }
-        
-        property_t *p = curo->properties;
-        while (p) {
-            property_t *next = p->next;
-            if (p->value.type == PT_TMPNAME) {
-                object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
-                if (!obj) {
-                    printf("Undefined reference to %s.\n", p->value.d.ptr);
-                    return NULL;
-                }
-                object_property_add_object(curo, p->id, obj);
-            }
-            p = next;
-        }
-        
-        curo = next;
+    if (!fix_references(gd)) {
+        return NULL;
     }
 
     printf("Data loaded. Freeing temporary memory...\n\n");
@@ -628,3 +604,35 @@ gamedata_t* parse_file(const char *filename) {
     return gd;
 }
 
+int fix_references(gamedata_t *gd) {
+    object_t *curo = gd->root->first_child;
+    while (curo) {
+        object_t *next = curo->sibling;
+        if (curo->parent_name) {
+            object_t *parent = object_get_by_ident(gd, curo->parent_name);
+            if (!parent) {
+                printf("Unknown object name %s.\n", curo->parent_name);
+                return 0;
+            }
+            object_move(curo, parent);
+            curo->parent_name = NULL;
+        }
+        
+        property_t *p = curo->properties;
+        while (p) {
+            property_t *next = p->next;
+            if (p->value.type == PT_TMPNAME) {
+                object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
+                if (!obj) {
+                    printf("Undefined reference to %s.\n", p->value.d.ptr);
+                    return 0;
+                }
+                object_property_add_object(curo, p->id, obj);
+            }
+            p = next;
+        }
+        
+        curo = next;
+    }
+    return 1;
+}
