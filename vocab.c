@@ -14,6 +14,11 @@ static unsigned vocab_size = 0;
 static vocab_t *vocab_list = NULL;
 
 void vocab_dump() {
+    if (!vocab) {
+        printf("No vocab!\n");
+        return;
+    }
+    
     for (int i = 0; i < vocab_size; ++i) {
         printf("%2d -%s-\n", i, vocab[i]);
     }
@@ -24,8 +29,6 @@ void vocab_raw_add(const char *the_word) {
     vocab_t *word = calloc(sizeof(vocab_t), 1);
     word->word = str_dupl(the_word);
     ++vocab_size;
-    
-    printf("added '%s'\n", the_word);
     
     if (!vocab_list) {
         vocab_list = word;

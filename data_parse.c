@@ -9,6 +9,7 @@
 #define T_ATOM    1
 #define T_STRING  2
 #define T_INTEGER 3
+#define T_VOCAB   4
 
 #define T_OPEN    98
 #define T_CLOSE   99
@@ -80,6 +81,9 @@ void dump_list(FILE *dest, list_t *list) {
             case T_INTEGER:
                 fprintf(dest, " %d", pos->number);
                 break;
+            case T_VOCAB:
+                fprintf(dest, " <%d>", pos->number);
+                break;
             default:
                 fprintf(dest, " [%d: unhandled]", pos->type);
         }
@@ -120,6 +124,8 @@ void dump_tokens(FILE *dest, token_t *tokens) {
             fprintf(dest, "=%s=", cur->text);
         if (cur->type == T_INTEGER) 
             fprintf(dest, "%d", cur->number);
+        if (cur->type == T_VOCAB) 
+            fprintf(dest, "<%s>", cur->text);
         fprintf(dest, " (%p - %p - %p)\n", cur->prev, cur, cur->next);
         cur = cur->next;
     }
@@ -153,7 +159,7 @@ void list_free(list_t *list) {
             list_free(sublist);
             sublist = next;
         }
-    } else if (list->type == T_ATOM || list->type == T_STRING) {
+    } else if (list->type == T_ATOM || list->type == T_STRING || list->type == T_VOCAB) {
         free(list->text);
     }
     free(list);
@@ -258,6 +264,18 @@ token_t *tokenize(char *file) {
             t->type = T_STRING;
             t->text = str_dupl(token);
             token_add(&tokens, t);
+        } else if (file[pos] == '<') {
+            ++pos;
+            char *token = &file[pos];
+            while (pos < filesize && file[pos] != '>') {
+                ++pos;
+            }
+            file[pos++] = 0;
+            token_t *t = calloc(sizeof(token_t), 1);
+            t->type = T_VOCAB;
+            vocab_raw_add(token);
+            t->text = str_dupl(token);
+            token_add(&tokens, t);
         } else {
             printf("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
             ++pos;
@@ -275,7 +293,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
             || strcmp(list->child->text,"action") || list->child->next == NULL) {
         return 0;
     }
-    
+
     list_t *cur = list->child->next;
     if (cur->type != T_INTEGER) {
         printf("Action number must be integer.\n");
@@ -295,11 +313,10 @@ int parse_action(gamedata_t *gd, list_t *list) {
     list_t *sub;
     while (cur) {
         switch(cur->type) {
-            case T_STRING:
+            case T_VOCAB:
                 act->grammar[pos].type = GT_WORD;
                 act->grammar[pos].value = vocab_index(cur->text);
                 ++pos;
-                vocab_raw_add(cur->text);
                 break;
             case T_ATOM:
                 if (strcmp(cur->text, "noun") == 0) {
@@ -317,26 +334,27 @@ int parse_action(gamedata_t *gd, list_t *list) {
                 sub = cur->child;
                 while (sub) {
                     switch (sub->type) {
-                        case T_STRING:
+                        case T_VOCAB:
                             act->grammar[pos].type = GT_WORD;
                             act->grammar[pos].value = vocab_index(sub->text);
                             if (sub->next) {
                                 act->grammar[pos].flags |= GF_ALT;
                             }
                             ++pos;
-                            vocab_raw_add(sub->text);
                             break;
-                        case T_LIST:
-                        case T_INTEGER:
-                            printf("Integer and list values not permitted in action sub-statement.\n");
+                        default:
+                            printf("Only vocab values permitted in action sub-statement. (%d)\n", sub->type);
                             return 0;
                     }
                     sub = sub->next;
                 }
                 break;
+            case T_STRING:
             case T_INTEGER:
-                printf("Integer values not permitted in action statement.\n");
+                printf("Integer and string values not permitted in action statement.\n");
                 return 0;
+            default:
+                printf("Bad token type %d in action definition.\n", cur->type);
         }
         cur = cur->next;
     }
@@ -373,6 +391,11 @@ list_t* parse_list(token_t **place) {
             } else if (cur->type == T_STRING) {
                 list_t *item = calloc(sizeof(list_t), 1);
                 item->type = T_STRING;
+                item->text = str_dupl(cur->text);
+                list_add(list, item);
+            } else if (cur->type == T_VOCAB) {
+                list_t *item = calloc(sizeof(list_t), 1);
+                item->type = T_VOCAB;
                 item->text = str_dupl(cur->text);
                 list_add(list, item);
             }
@@ -461,17 +484,6 @@ int parse_object(gamedata_t *gd, list_t *list) {
                 ++counter;
                 cur = cur->next;
             }
-            if (strcmp(prop->text, "vocab") == 0) {
-                list_t *word = val->child;
-                while(word) {
-                    if (word->type == T_STRING) {
-                        vocab_raw_add(word->text);
-                    } else {
-                        printf("WARNING: Non-string in vocab property.\n");
-                    }
-                    word = word->next;
-                }
-            }
         } else {
             printf("WARNING: unhandled property type %d.\n", val->type);
         }
@@ -512,6 +524,7 @@ gamedata_t* parse_file(const char *filename) {
     while (tokens->prev) {
         tokens = tokens->prev;
     }
+    vocab_build();
 
     printf("Building lists...\n");
     list_t *lists = NULL, *last_list = NULL;
@@ -611,7 +624,6 @@ gamedata_t* parse_file(const char *filename) {
         lists = next_list;
     }
 
-    vocab_build();
     vocab_dump();
     return gd;
 }
