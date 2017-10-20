@@ -2,6 +2,8 @@
     name "Entryway"
     description "A short, square segment of hallway between the interior of the house and the exterior."
     north kitchen
+    west bedroom
+    south "The door is locked.\n"
     doors 6
     junk (bedroom 54342 "gjires" )
 
@@ -27,7 +29,7 @@
 (object kitchen -
     name "Kitchen"
     description "A well appointed kitchen, suitable for even the finest tastes."
-    north bedroom
+    south entryway
 )
 (object - kitchen
     name "apricot"
@@ -42,7 +44,7 @@
 (object bedroom -
     name "Bedroom"
     description "A simple bedroom with a cot visible."
-    north entryway
+    east entryway
 )
 
 
@@ -63,7 +65,7 @@
 (action 0 ( <q> <quit> ) )
 (action 1 ( <get> <take> ) noun )
 (action 2 <drop> noun )
-(action 3 ( <go> <travel> <move> ) any )
+(action 3 ( <go> <travel> <move> ) ( <north> <n> <south> <s> <east> <e> <west> <w> ) )
 (action 4 ( <inv> <i> <inventory> ) )
 (action 5 ( <look> <l> ) )
 (action 6 <put> noun ( <on> <in> ) noun )
