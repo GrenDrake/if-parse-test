@@ -246,14 +246,14 @@ token_t *tokenize(char *file) {
             t->number = strtol(token, 0, 0);
             token_add(&tokens, t);
         } else if (valid_identifier(file[pos])) {
+            int start = pos;
             char *token = &file[pos];
             while (valid_identifier(file[pos])) {
                 ++pos;
             }
-            file[pos++] = 0;
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_ATOM;
-            t->text = str_dupl(token);
+            t->text = str_dupl_left(token, pos - start);
             token_add(&tokens, t);
         } else if (file[pos] == '"') {
             ++pos;
@@ -532,6 +532,7 @@ gamedata_t* parse_file(const char *filename) {
     while (tokens->prev) {
         tokens = tokens->prev;
     }
+    dump_tokens(stdout, tokens);
     vocab_build();
 
     printf("Building lists...\n");
