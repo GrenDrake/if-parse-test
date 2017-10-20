@@ -53,6 +53,11 @@ static void token_free(token_t *token);
 static int valid_identifier(int ch);
 static token_t *tokenize(char *file);
 
+static int parse_action(gamedata_t *gd, list_t *list);
+static list_t* parse_list(token_t **place);
+static int parse_object(gamedata_t *gd, list_t *list);
+
+
 /* ****************************************************************************
  * Dumping data to a stream (for debugging)
  * ****************************************************************************/
@@ -262,7 +267,7 @@ token_t *tokenize(char *file) {
 
 
 /* ****************************************************************************
- * Everything else
+ * Parse functions
  * ****************************************************************************/
 int parse_action(gamedata_t *gd, list_t *list) {
     if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
