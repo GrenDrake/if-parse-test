@@ -8,19 +8,19 @@
 )
 (object - entryway
     name "table"
-    vocab ( "table" )
+    vocab ( <table> )
 )
 (object - entryway
     name "chair"
-    vocab ( "chair" )
+    vocab ( <chair> )
 )
 (object - entryway
     name "painting"
-    vocab ( "painting" )
+    vocab ( <painting> )
 )
 (object - entryway
     name "fireplace"
-    vocab ( "fireplace" "fire" "place" )
+    vocab ( <fireplace> <fire> <place> )
 )
 
 
@@ -31,11 +31,11 @@
 )
 (object - kitchen
     name "apricot"
-    vocab ( "apricot" )
+    vocab ( <apricot> )
 )
 (object - kitchen
     name "turnip"
-    vocab ( "turnip" )
+    vocab ( <turnip> )
 )
 
 
@@ -46,18 +46,18 @@
 )
 
 
-(object player kitchen
+(object player entryway
     name "yourself" 
-    vocab ( "me" )
+    vocab ( <me> <self> )
 )
 
 (object - player 
     name "clear umbrella"
-    vocab ( "clear" "umbrella" )
+    vocab ( <clear> <umbrella> )
 )
 (object - player 
     name "black umbrella"
-    vocab ( "black" "umbrella" )
+    vocab ( <black> <umbrella> )
 )
 
 (action 0 ( <q> <quit> ) )

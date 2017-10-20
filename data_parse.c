@@ -455,6 +455,8 @@ int parse_object(gamedata_t *gd, list_t *list) {
             object_property_add_string(obj, p_num, str_dupl(val->text));
             property_t *p = object_property_get(obj, p_num);
             p->value.type = PT_TMPNAME;
+        } else if (val->type == T_VOCAB) {
+            object_property_add_integer(obj, p_num, vocab_index(val->text));
         } else if (val->type == T_INTEGER) {
             object_property_add_integer(obj, p_num, val->number);
         } else if (val->type == T_LIST) {
@@ -468,6 +470,10 @@ int parse_object(gamedata_t *gd, list_t *list) {
                     case T_INTEGER:
                         arr[counter].type = PT_INTEGER;
                         arr[counter].d.num = cur->number;
+                        break;
+                    case T_VOCAB:
+                        arr[counter].type = PT_INTEGER;
+                        arr[counter].d.num = vocab_index(cur->text);
                         break;
                     case T_STRING:
                         arr[counter].type = PT_STRING;

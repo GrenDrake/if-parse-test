@@ -251,13 +251,14 @@ object_t* scope_ceiling(gamedata_t *gd, object_t *obj) {
     return obj;
 }
 
-int word_in_property(object_t *obj, int pid, const char *word) {
+int word_in_property(object_t *obj, int pid, int word) {
     property_t *p = object_property_get(obj, pid);
     if (!p || p->value.type != PT_ARRAY) {
         return 0;
     }
     for (int i = 0; i < p->value.array_size; ++i) {
-        if (strcmp(word, ((value_t*)p->value.d.ptr)[i].d.ptr) == 0) {
+        value_t *v = &((value_t*)p->value.d.ptr)[i];
+        if (word == v->d.num) {
             return 1;
         }
     }
@@ -300,7 +301,7 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
 
         if (word_in_property(gd->search[i], 
                                 property_number(gd, "vocab"), 
-                                gd->words[*first_word].word)) {
+                                gd->words[*first_word].word_no)) {
             printf("   (matched)\n");
             if (match) {
                 printf("   (too many!)\n");
