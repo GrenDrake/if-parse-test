@@ -33,6 +33,12 @@ typedef struct LIST {
     struct LIST *next;
 } list_t;
 
+typedef struct VOCAB {
+    char *word;
+    struct VOCAB *prev;
+    struct VOCAB *next;
+} vocab_t;
+
 // dumping data
 static void dump_list(FILE *dest, list_t *list);
 static void dump_lists(FILE *fp, list_t *lists);
@@ -53,6 +59,10 @@ static void token_free(token_t *token);
 static int valid_identifier(int ch);
 static token_t *tokenize(char *file);
 
+// vocab building
+static void vocab_raw_add(const char *the_word);
+
+// parsing
 static int parse_action(gamedata_t *gd, list_t *list);
 static list_t* parse_list(token_t **place);
 static int parse_object(gamedata_t *gd, list_t *list);
@@ -267,6 +277,54 @@ token_t *tokenize(char *file) {
 
 
 /* ****************************************************************************
+ * Vocabulary building
+ * ****************************************************************************/
+static vocab_t *vocab_list = NULL;
+static size_t vocab_size = 0;
+void vocab_raw_add(const char *the_word) {
+    vocab_t *word = calloc(sizeof(vocab_t), 1);
+    word->word = str_dupl(the_word);
+    ++vocab_size;
+    
+    printf("added '%s'\n", the_word);
+    
+    if (!vocab_list) {
+        vocab_list = word;
+        return;
+    }
+    
+    if (strcmp(the_word, vocab_list->word) < 0) {
+        word->next = vocab_list;
+        vocab_list = word;
+        return;
+    }
+    if (strcmp(the_word, vocab_list->word) == 0) {
+        free(word->word);
+        free(word);
+        --vocab_size;
+        return;
+    }    
+    
+    vocab_t *cur = vocab_list;
+    while (cur->next) {
+        if (strcmp(the_word, cur->next->word) < 0) {
+            word->next = cur->next;
+            cur->next = word;
+            return;
+        }
+        if (strcmp(the_word, cur->next->word) == 0) {
+            free(word->word);
+            free(word);
+            --vocab_size;
+            return;
+        }    
+        cur = cur->next;
+    }
+    cur->next = word;
+}
+
+
+/* ****************************************************************************
  * Parse functions
  * ****************************************************************************/
 int parse_action(gamedata_t *gd, list_t *list) {
@@ -298,6 +356,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
                 act->grammar[pos].type = GT_WORD;
                 act->grammar[pos].value = vocab_index(cur->text);
                 ++pos;
+                vocab_raw_add(cur->text);
                 break;
             case T_ATOM:
                 if (strcmp(cur->text, "noun") == 0) {
@@ -322,6 +381,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
                                 act->grammar[pos].flags |= GF_ALT;
                             }
                             ++pos;
+                            vocab_raw_add(sub->text);
                             break;
                         case T_LIST:
                         case T_INTEGER:
@@ -457,6 +517,17 @@ int parse_object(gamedata_t *gd, list_t *list) {
                 }
                 ++counter;
                 cur = cur->next;
+            }
+            if (strcmp(prop->text, "vocab") == 0) {
+                list_t *word = val->child;
+                while(word) {
+                    if (word->type == T_STRING) {
+                        vocab_raw_add(word->text);
+                    } else {
+                        printf("WARNING: Non-string in vocab property.\n");
+                    }
+                    word = word->next;
+                }
             }
         } else {
             printf("WARNING: unhandled property type %d.\n", val->type);
