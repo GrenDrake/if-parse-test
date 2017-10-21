@@ -176,45 +176,13 @@ void drop_sub(gamedata_t *gd) {
 
 
 void move_sub(gamedata_t *gd) {
-    static struct {
-        int word;
-        int prop;
-    } compass[8] = { { 0 } };
-
-    if (compass[0].word == 0) {
-        compass[0].word = vocab_index("north");
-        compass[0].prop = property_number(gd, "north");
-        compass[1].word = vocab_index("n");
-        compass[1].prop = property_number(gd, "north");
-        compass[2].word = vocab_index("south");
-        compass[2].prop = property_number(gd, "south");
-        compass[3].word = vocab_index("s");
-        compass[3].prop = property_number(gd, "south");
-        compass[4].word = vocab_index("east");
-        compass[4].prop = property_number(gd, "east");
-        compass[5].word = vocab_index("e");
-        compass[5].prop = property_number(gd, "east");
-        compass[6].word = vocab_index("west");
-        compass[6].prop = property_number(gd, "west");
-        compass[7].word = vocab_index("w");
-        compass[7].prop = property_number(gd, "west");
-    }
-
-    int dir_prop = -1;
-    for (int i = 0; i < 8; ++i) {
-        if (gd->words[1].word_no == compass[i].word) {
-            dir_prop = compass[i].prop;
-            break;
-        }
-    }
-
-    if (dir_prop == -1) {
-        printf("Unknown direction.\n");
+    property_t *p = object_property_get(gd->objects[0], property_number(gd, "dir_prop"));
+    if (!p || p->value.type != PT_STRING) {
+        printf("Malformed direction.\n");
         return;
     }
 
-    object_t *cur = gd->player->parent;
-    property_t *prop = object_property_get(cur, dir_prop);
+    property_t *prop = object_property_get(gd->player->parent, property_number(gd, (char*)p->value.d.ptr));
     if (prop) {
         if (prop->value.type == PT_OBJECT) {
             object_move(gd->player, prop->value.d.ptr);
@@ -223,7 +191,7 @@ void move_sub(gamedata_t *gd) {
             printf("%s", prop->value.d.ptr);
         }
     } else {
-            printf("Can't go that way.\n");
+        printf("Can't go that way.\n");
     }
 }
 

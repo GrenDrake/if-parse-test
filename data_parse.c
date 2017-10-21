@@ -327,6 +327,15 @@ int parse_action(gamedata_t *gd, list_t *list) {
                 } else if (strcmp(cur->text, "any") == 0) {
                     act->grammar[pos].type = GT_ANY;
                     ++pos;
+                } else if (strcmp(cur->text, "scope") == 0) {
+                    act->grammar[pos].type = GT_SCOPE;
+                    cur = cur->next;
+                    if (!cur || cur->type != T_ATOM) {
+                        printf("scope grammar token must be followed by object name.\n");
+                        return 0;
+                    }
+                    act->grammar[pos].ptr = str_dupl(cur->text);
+                    ++pos;
                 } else {
                     printf("Unrecognized grammar token '%s'.\n", cur->text);
                     return 0;
@@ -640,6 +649,22 @@ int fix_references(gamedata_t *gd) {
         }
 
         curo = next;
+    }
+
+    action_t *cura = gd->actions;
+    while (cura) {
+        for (int i = 0; i < GT_MAX_TOKENS; ++i) {
+            if (cura->grammar[i].type == GT_SCOPE) {
+                char *name = cura->grammar[i].ptr;
+                cura->grammar[i].ptr = object_get_by_ident(gd, name);
+                if (!cura->grammar[i].ptr) {
+                    printf("Action scope contains unknown object %s.\n", name);
+                    return 0;
+                }
+                free(name);
+            }
+        }
+        cura = cura->next;
     }
     return 1;
 }

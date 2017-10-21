@@ -39,6 +39,7 @@
 #define GT_WORD 1
 #define GT_ANY  2
 #define GT_NOUN 3
+#define GT_SCOPE 4
 
 #define GF_ALT  1
 
@@ -74,6 +75,7 @@ typedef struct CMD_TOKEN {
 typedef struct GRAMMAR {
     int type;
     int value;
+    void *ptr;
     int flags;
 } grammar_t;
 

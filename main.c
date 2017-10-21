@@ -208,6 +208,19 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 }
                 ++token_a;
                 break;
+            case GT_SCOPE:
+                scope_within(gd, (object_t*)action->grammar[token_a].ptr);
+                obj = match_noun(gd);
+                if (!obj) {
+                    return PARSE_BADNOUN;
+                } else if (obj == (object_t*)-1) {
+                    return PARSE_AMBIG;
+                } else {
+                    gd->objects[gd->noun_count] = obj;
+                    ++gd->noun_count;
+                }
+                ++token_a;
+                break;
             case GT_ANY:
                 ++token_a;
                 ++gd->cur_word;

@@ -78,10 +78,16 @@
     is_open 0
 )
 
+(object compass -)
+(object - compass name "north" vocab (<n> <north>) dir_prop "north")
+(object - compass name "south" vocab (<s> <south>) dir_prop "south")
+(object - compass name "east"  vocab (<e> <east>)  dir_prop "east")
+(object - compass name "west"  vocab (<w> <west>)  dir_prop "west")
+
 (action 0 (<q> <quit>))
 (action 1 (<get> <take>) noun)
 (action 2 <drop> noun)
-(action 3 (<go> <travel> <move>) (<north> <n> <south> <s> <east> <e> <west> <w>))
+(action 3 (<go> <travel> <move>) scope compass)
 (action 4 (<inv> <i> <inventory>))
 (action 4 (<inv> <i> <inventory>) (<tall> <wide>))
 (action 5 (<look> <l>))
