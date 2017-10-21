@@ -230,8 +230,14 @@ void inv_sub(gamedata_t *gd) {
         printf("You are carrying nothing.\n");
         return;
     }
-    printf("You are carrying:\n");
-    print_list_vert(gd, gd->player);
+    if (gd->words[1].word && gd->words[1].word_no == vocab_index("wide")) {
+        printf("You are carrying: ");
+        print_list_horz(gd, gd->player);
+        putchar('\n');
+    } else {
+        printf("You are carrying:\n");
+        print_list_vert(gd, gd->player);
+    }
 }
 
 void look_sub(gamedata_t *gd) {

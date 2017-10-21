@@ -83,5 +83,6 @@
 (action 2 <drop> noun)
 (action 3 (<go> <travel> <move>) (<north> <n> <south> <s> <east> <e> <west> <w>))
 (action 4 (<inv> <i> <inventory>))
+(action 4 (<inv> <i> <inventory>) (<tall> <wide>))
 (action 5 (<look> <l>))
 (action 6 <put> noun (<on> <in>) noun)
