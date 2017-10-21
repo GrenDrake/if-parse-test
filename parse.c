@@ -351,9 +351,69 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
     return match;
 }
 
+int try_parse_action(gamedata_t *gd, action_t *action) {
+    int token_a = 0;
+    int token_t = 0;
+    gd->cur_word = 0;
+    object_t *obj;
+
+    while (1) {
+        if (action->grammar[token_a].type == GT_END) {
+            if (!gd->words[token_t].word) {
+                return action->action_code;
+            } else {
+                return PARSE_NONMATCH;
+            }
+        } else if (!gd->words[token_t].word) {
+            return PARSE_NONMATCH;
+        }
+
+        switch(action->grammar[token_a].type) {
+            case GT_END:
+                printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
+                break;
+            case GT_NOUN:
+                obj = match_noun(gd, &token_t);
+                if (!obj) {
+                    printf("Not visible.\n");
+                    return PARSE_NONMATCH;
+                } else if (obj == (object_t*)-1) {
+                    printf("Multiple items matched.\n");
+                    gd->action = PARSE_AMBIG;
+                } else {
+                    gd->objects[gd->noun_count] = obj;
+                    ++gd->noun_count;
+                }
+                ++token_a;
+                ++token_t;
+                break;
+            case GT_ANY:
+                ++token_a;
+                ++token_t;
+                break;
+            case GT_WORD:
+                if (gd->words[token_t].word_no == action->grammar[token_a].value) {
+                    while (action->grammar[token_a].flags & GF_ALT) {
+                        ++token_a;
+                    }
+                    ++token_a;
+                    ++token_t;
+                } else {
+                    if (action->grammar[token_a].flags & GF_ALT) {
+                        ++token_a;
+                    } else {
+                        return PARSE_NONMATCH;
+                    }
+                }
+                break;
+            default:
+                return PARSE_BADTOKEN;
+        }
+    }
+}
+
 int parse(gamedata_t *gd) {
     action_t *cur_action = gd->actions;
-    object_t *obj;
 
     gd->noun_count = 0;
 
@@ -363,70 +423,11 @@ int parse(gamedata_t *gd) {
     }
 
     while (cur_action) {
-        gd->action = -1;
-        int token_a = 0;
-        int token_t = 0;
-
-        while (gd->action == -1) {
-            if (cur_action->grammar[token_a].type == GT_END) {
-                if (!gd->words[token_t].word) {
-                    gd->action = cur_action->action_code;
-                } else {
-                    gd->action = -2;
-                }
-                continue;
-            } else if (!gd->words[token_t].word) {
-                gd->action = -2;
-                continue;
-            }
-
-            switch(cur_action->grammar[token_a].type) {
-                case GT_END:
-                    printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
-                    break;
-                case GT_NOUN:
-                    obj = match_noun(gd, &token_t);
-                    if (!obj) {
-                        printf("Not visible.\n");
-                        gd->action = -2;
-                    } else if (obj == (object_t*)-1) {
-                        printf("Multiple items matched.\n");
-                        gd->action = -2;
-                    } else {
-                        gd->objects[gd->noun_count] = obj;
-                        ++gd->noun_count;
-                    }
-                    ++token_a;
-                    ++token_t;
-                    break;
-                case GT_ANY:
-                    ++token_a;
-                    ++token_t;
-                    break;
-                case GT_WORD:
-                    if (gd->words[token_t].word_no == cur_action->grammar[token_a].value) {
-                        while (cur_action->grammar[token_a].flags & GF_ALT) {
-                            ++token_a;
-                        }
-                        ++token_a;
-                        ++token_t;
-                    } else {
-                        if (cur_action->grammar[token_a].flags & GF_ALT) {
-                            ++token_a;
-                        } else {
-                            gd->action = -2;
-                        }
-                    }
-                    break;
-                default:
-                    gd->action = -2;
-            }
-        }
-
-        if (gd->action >= 0) {
+        int result = try_parse_action(gd, cur_action);
+        if (result >= 0) {
+            gd->action = result;
             break;
         }
-
         cur_action = cur_action->next;
     }
 

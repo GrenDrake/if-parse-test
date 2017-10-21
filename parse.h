@@ -4,6 +4,10 @@
 #define MAX_INPUT_LENGTH 256
 #define MAX_INPUT_WORDS 32
 
+#define PARSE_NONMATCH -2
+#define PARSE_AMBIG -3
+#define PARSE_BADTOKEN -4
+
 #define PI_NAME 1
 #define PI_DESC 2
 #define PI_NORTH 3
@@ -115,6 +119,7 @@ typedef struct GAMEDATA {
     int quit_game;
     char input[MAX_INPUT_LENGTH];
     cmd_token_t words[MAX_INPUT_WORDS];
+    int cur_word;
     int action;
     int search_count;
     object_t *search[PARSE_MAX_OBJS];
