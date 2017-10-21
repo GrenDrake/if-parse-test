@@ -250,6 +250,7 @@ void get_line(char *buffer, int length) {
 
 int tokenize(gamedata_t *gd) {
     int in_word = 0, count = 0;
+    memset(gd->words, 0, sizeof(cmd_token_t) * MAX_INPUT_WORDS);
     for (int i = 0; i < MAX_INPUT_LENGTH; ++i) {
         unsigned char here = gd->input[i];
         if (isspace(here) || here == 0) {
@@ -272,7 +273,6 @@ int tokenize(gamedata_t *gd) {
             in_word = 1;
         }
     }
-    gd->words[count].word = NULL;
     if (count == 0) {
         printf("Pardon?\n");
         return 0;
