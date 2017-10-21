@@ -10,7 +10,9 @@
 )
 (object - entryway
     name "table"
+    description "A small, unsteady table."
     vocab ( <table> )
+    is_takable 0
 )
 (object - entryway
     name "chair"
@@ -23,6 +25,7 @@
 (object - entryway
     name "fireplace"
     vocab ( <fireplace> <fire> <place> )
+    isTakable 0
 )
 
 

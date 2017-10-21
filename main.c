@@ -95,18 +95,13 @@ void take_sub(gamedata_t *gd) {
     } else if (object_contains(gd->player, gd->objects[0])) {
         printf("Already taken.\n");
     } else {
-        object_move(gd->objects[0], gd->player);
-
-        property_t *p = object_property_get(gd->objects[0], PI_DESC);
-        if (p) {
-            for (int i = 0; i < p->value.array_size; ++i) {
-                printf("%d: %d\n", i, ((value_t*)p->value.d.ptr)[i].d.num);
-            }
+        property_t *p = object_property_get(gd->objects[0], property_number(gd, "is_takable"));
+        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
+            printf("Impossible.\n");
         } else {
-            printf("!P\n");
+            object_move(gd->objects[0], gd->player);
+            printf("Taken.\n");
         }
-
-        printf("Taken.\n");
     }
 }
 
