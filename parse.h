@@ -97,9 +97,9 @@ typedef struct PROPERTY {
 typedef struct OBJECT {
     int id;
     property_t *properties;
-    
+
     const char *parent_name;
-    
+
     struct OBJECT *parent;
     struct OBJECT *first_child;
     struct OBJECT *sibling;

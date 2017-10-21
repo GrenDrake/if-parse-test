@@ -120,13 +120,13 @@ void dump_tokens(FILE *dest, token_t *tokens) {
     token_t *cur = tokens;
     while (cur) {
         fprintf(dest, "%d: ", cur->type);
-        if (cur->type == T_STRING) 
+        if (cur->type == T_STRING)
             fprintf(dest, "~%s~", cur->text);
-        if (cur->type == T_ATOM) 
+        if (cur->type == T_ATOM)
             fprintf(dest, "=%s=", cur->text);
-        if (cur->type == T_INTEGER) 
+        if (cur->type == T_INTEGER)
             fprintf(dest, "%d", cur->number);
-        if (cur->type == T_VOCAB) 
+        if (cur->type == T_VOCAB)
             fprintf(dest, "<%s>", cur->text);
         fprintf(dest, " (%p - %p - %p)\n", cur->prev, cur, cur->next);
         cur = cur->next;
@@ -215,7 +215,7 @@ int valid_identifier(int ch) {
 
 token_t *tokenize(char *file) {
     if (!file) return NULL;
-    
+
     token_t *tokens = NULL;
     size_t pos = 0, filesize = strlen(file);
     while (pos < filesize) {
@@ -307,7 +307,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
         printf("Action has no grammar.\n");
         return 0;
     }
-    
+
     action_t *act = calloc(sizeof(action_t), 1);
     act->action_code = code;
     int pos = 0;
@@ -361,7 +361,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
         cur = cur->next;
     }
     action_add(gd, act);
-    
+
     return 1;
 }
 
@@ -447,7 +447,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
             printf("Property name must be atom.\n");
             return 0;
         }
-        
+
         int p_num = property_number(gd, prop->text);
         if (val->type == T_STRING) {
             object_property_add_string(obj, p_num, str_dupl(val->text));
@@ -483,7 +483,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
                         arr[counter].type = PT_TMPNAME;
                         arr[counter].d.ptr = str_dupl(cur->text);
                         break;
-                    case T_LIST: 
+                    case T_LIST:
                         printf("Nested lists are not permitted in object properties.\n");
                         break;
                     default:
@@ -624,7 +624,7 @@ int fix_references(gamedata_t *gd) {
             object_move(curo, parent);
             curo->parent_name = NULL;
         }
-        
+
         property_t *p = curo->properties;
         while (p) {
             property_t *next = p->next;
@@ -638,7 +638,7 @@ int fix_references(gamedata_t *gd) {
             }
             p = next;
         }
-        
+
         curo = next;
     }
     return 1;

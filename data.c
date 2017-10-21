@@ -90,7 +90,7 @@ void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value) {
     symbol->name = str_dupl(name);
     symbol->type = type;
     symbol->d.ptr = value;
-    
+
     symbol_add_core(gd, symbol);
 }
 
@@ -99,17 +99,17 @@ void symbol_add_value(gamedata_t *gd, const char *name, int type, int value) {
     symbol->name = str_dupl(name);
     symbol->type = type;
     symbol->d.value = value;
-    
+
     symbol_add_core(gd, symbol);
 }
 
 symbol_t* symbol_get(gamedata_t *gd, int type, const char *name) {
     unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
-    
+
     if (gd->symbols->buckets[hashcode] == NULL) {
         return NULL;
     }
-    
+
     symbol_t *symbol = gd->symbols->buckets[hashcode];
     while (symbol) {
         if (symbol->type == type && strcmp(symbol->name, name) == 0) {

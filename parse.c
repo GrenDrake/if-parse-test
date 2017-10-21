@@ -112,7 +112,7 @@ void move_sub(gamedata_t *gd) {
         int word;
         int prop;
     } compass[8] = { { 0 } };
-    
+
     if (compass[0].word == 0) {
         compass[0].word = vocab_index("north");
         compass[0].prop = property_number(gd, "north");
@@ -131,7 +131,7 @@ void move_sub(gamedata_t *gd) {
         compass[7].word = vocab_index("w");
         compass[7].prop = property_number(gd, "west");
     }
-    
+
     int dir_prop = -1;
     for (int i = 0; i < 8; ++i) {
         if (gd->words[1].word_no == compass[i].word) {
@@ -235,7 +235,7 @@ void testfunc(object_t *obj) {
                     }
                 }
                 break; }
-                
+
         }
         printf("\n");
         cur = cur->next;
@@ -337,8 +337,8 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
         object_property_print(gd->search[i], property_number(gd, "name"));
         printf("\n");
 
-        if (word_in_property(gd->search[i], 
-                                property_number(gd, "vocab"), 
+        if (word_in_property(gd->search[i],
+                                property_number(gd, "vocab"),
                                 gd->words[*first_word].word_no)) {
             printf("   (matched)\n");
             if (match) {

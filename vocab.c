@@ -19,7 +19,7 @@ void vocab_dump() {
         printf(" none!\n");
         return;
     }
-    
+
     for (int i = 0; i < vocab_size; ++i) {
         if (i != 0) {
             putchar(',');
@@ -36,12 +36,12 @@ void vocab_raw_add(const char *the_word) {
     vocab_t *word = calloc(sizeof(vocab_t), 1);
     word->word = str_dupl(the_word);
     ++vocab_size;
-    
+
     if (!vocab_list) {
         vocab_list = word;
         return;
     }
-    
+
     if (strcmp(the_word, vocab_list->word) < 0) {
         word->next = vocab_list;
         vocab_list = word;
@@ -52,8 +52,8 @@ void vocab_raw_add(const char *the_word) {
         free(word);
         --vocab_size;
         return;
-    }    
-    
+    }
+
     vocab_t *cur = vocab_list;
     while (cur->next) {
         if (strcmp(the_word, cur->next->word) < 0) {
@@ -66,7 +66,7 @@ void vocab_raw_add(const char *the_word) {
             free(word);
             --vocab_size;
             return;
-        }    
+        }
         cur = cur->next;
     }
     cur->next = word;
