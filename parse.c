@@ -352,7 +352,7 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
 }
 
 int parse(gamedata_t *gd) {
-    action_t *cact = gd->actions;
+    action_t *cur_action = gd->actions;
     object_t *obj;
 
     gd->noun_count = 0;
@@ -362,15 +362,15 @@ int parse(gamedata_t *gd) {
         return 0;
     }
 
-    while (cact) {
+    while (cur_action) {
         gd->action = -1;
         int token_a = 0;
         int token_t = 0;
 
         while (gd->action == -1) {
-            if (cact->grammar[token_a].type == GT_END) {
+            if (cur_action->grammar[token_a].type == GT_END) {
                 if (!gd->words[token_t].word) {
-                    gd->action = cact->action_code;
+                    gd->action = cur_action->action_code;
                 } else {
                     gd->action = -2;
                 }
@@ -380,7 +380,7 @@ int parse(gamedata_t *gd) {
                 continue;
             }
 
-            switch(cact->grammar[token_a].type) {
+            switch(cur_action->grammar[token_a].type) {
                 case GT_END:
                     printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                     break;
@@ -404,14 +404,14 @@ int parse(gamedata_t *gd) {
                     ++token_t;
                     break;
                 case GT_WORD:
-                    if (gd->words[token_t].word_no == cact->grammar[token_a].value) {
-                        while (cact->grammar[token_a].flags & GF_ALT) {
+                    if (gd->words[token_t].word_no == cur_action->grammar[token_a].value) {
+                        while (cur_action->grammar[token_a].flags & GF_ALT) {
                             ++token_a;
                         }
                         ++token_a;
                         ++token_t;
                     } else {
-                        if (cact->grammar[token_a].flags & GF_ALT) {
+                        if (cur_action->grammar[token_a].flags & GF_ALT) {
                             ++token_a;
                         } else {
                             gd->action = -2;
@@ -427,7 +427,7 @@ int parse(gamedata_t *gd) {
             break;
         }
 
-        cact = cact->next;
+        cur_action = cur_action->next;
     }
 
     return 1;
