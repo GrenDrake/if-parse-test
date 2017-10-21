@@ -374,11 +374,9 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
             case GT_NOUN:
                 obj = match_noun(gd, &gd->cur_word);
                 if (!obj) {
-                    printf("Not visible.\n");
-                    return PARSE_NONMATCH;
+                    return PARSE_BADNOUN;
                 } else if (obj == (object_t*)-1) {
-                    printf("Multiple items matched.\n");
-                    gd->action = PARSE_AMBIG;
+                    return PARSE_AMBIG;
                 } else {
                     gd->objects[gd->noun_count] = obj;
                     ++gd->noun_count;
@@ -413,7 +411,8 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
 
 int parse(gamedata_t *gd) {
     action_t *cur_action = gd->actions;
-
+    int best_result = PARSE_BADTOKEN;
+    gd->action = PARSE_BADTOKEN;
     gd->noun_count = 0;
 
     if (gd->words[0].word_no == -1) {
@@ -421,16 +420,35 @@ int parse(gamedata_t *gd) {
         return 0;
     }
 
-    while (cur_action) {
+    while (cur_action && best_result < 0) {
         int result = try_parse_action(gd, cur_action);
+        if (best_result < result) {
+            best_result = result;
+        }
         if (result >= 0) {
-            gd->action = result;
             break;
         }
         cur_action = cur_action->next;
     }
+    
+    switch(best_result) {
+        case PARSE_AMBIG:
+            printf("Multiple items matched.\n");
+            break;
+        case PARSE_BADNOUN:
+            printf("Not visible.\n");
+            break;
+        case PARSE_NONMATCH:
+            printf("Unrecognized command.\n");
+            break;
+        case PARSE_BADTOKEN:
+            printf("Parser error.\n");
+            break;
+        default:
+            gd->action = best_result;
+    }
 
-    return 1;
+    return gd->action >= 0;
 }
 
 int main() {
@@ -445,11 +463,6 @@ int main() {
         get_line(gd->input, MAX_INPUT_LENGTH-1);
 
         if (!tokenize(gd) || !parse(gd)) {
-            continue;
-        }
-
-        if (gd->action < 0) {
-            printf("Unrecognized command.\n");
             continue;
         }
 

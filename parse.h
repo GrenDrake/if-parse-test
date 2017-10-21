@@ -4,8 +4,9 @@
 #define MAX_INPUT_LENGTH 256
 #define MAX_INPUT_WORDS 32
 
-#define PARSE_NONMATCH -2
-#define PARSE_AMBIG -3
+#define PARSE_AMBIG -1
+#define PARSE_BADNOUN -2
+#define PARSE_NONMATCH -3
 #define PARSE_BADTOKEN -4
 
 #define PI_NAME 1
