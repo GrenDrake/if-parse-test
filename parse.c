@@ -353,18 +353,17 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
 
 int try_parse_action(gamedata_t *gd, action_t *action) {
     int token_a = 0;
-    int token_t = 0;
     gd->cur_word = 0;
     object_t *obj;
 
     while (1) {
         if (action->grammar[token_a].type == GT_END) {
-            if (!gd->words[token_t].word) {
+            if (!gd->words[gd->cur_word].word) {
                 return action->action_code;
             } else {
                 return PARSE_NONMATCH;
             }
-        } else if (!gd->words[token_t].word) {
+        } else if (!gd->words[gd->cur_word].word) {
             return PARSE_NONMATCH;
         }
 
@@ -373,7 +372,7 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
             case GT_NOUN:
-                obj = match_noun(gd, &token_t);
+                obj = match_noun(gd, &gd->cur_word);
                 if (!obj) {
                     printf("Not visible.\n");
                     return PARSE_NONMATCH;
@@ -385,19 +384,19 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                     ++gd->noun_count;
                 }
                 ++token_a;
-                ++token_t;
+                ++gd->cur_word;
                 break;
             case GT_ANY:
                 ++token_a;
-                ++token_t;
+                ++gd->cur_word;
                 break;
             case GT_WORD:
-                if (gd->words[token_t].word_no == action->grammar[token_a].value) {
+                if (gd->words[gd->cur_word].word_no == action->grammar[token_a].value) {
                     while (action->grammar[token_a].flags & GF_ALT) {
                         ++token_a;
                     }
                     ++token_a;
-                    ++token_t;
+                    ++gd->cur_word;
                 } else {
                     if (action->grammar[token_a].flags & GF_ALT) {
                         ++token_a;
