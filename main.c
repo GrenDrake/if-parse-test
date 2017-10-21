@@ -111,22 +111,22 @@ int word_in_property(object_t *obj, int pid, int word) {
     return 0;
 }
 
-object_t* match_noun(gamedata_t *gd) {
+void add_to_scope(gamedata_t *gd, object_t *obj) {
+    gd->search[gd->search_count] = obj;
+    ++gd->search_count;
+}
+
+void scope_within(gamedata_t *gd, object_t *ceiling) {
     object_t *obj, *obj_list[16];
     int queue;
 
-    obj = scope_ceiling(gd, gd->player);
-
     queue = 1;
-    gd->search[0] = obj;
-    gd->search_count = 1;
-    obj_list[0] = obj->first_child;
-    obj = obj->first_child;
+    obj_list[0] = ceiling->first_child;
+    obj = ceiling->first_child;
     while (queue > 0) {
         --queue;
         object_t *here = obj_list[queue];
-        gd->search[gd->search_count] = here;
-        ++gd->search_count;
+        add_to_scope(gd, here);
 
         if (here->sibling) {
             obj_list[queue] = here->sibling;
@@ -137,7 +137,9 @@ object_t* match_noun(gamedata_t *gd) {
             ++queue;
         }
     }
+}
 
+object_t* match_noun(gamedata_t *gd) {
     object_t *match = NULL;
     int match_strength = 0;
     int prop_vocab = property_number(gd, "vocab");
@@ -186,11 +188,15 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
             return PARSE_NONMATCH;
         }
 
+        gd->search_count = 0;
         switch(action->grammar[token_a].type) {
             case GT_END:
                 printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
             case GT_NOUN:
+                obj = scope_ceiling(gd, gd->player);
+                add_to_scope(gd, obj);
+                scope_within(gd, obj);
                 obj = match_noun(gd);
                 if (!obj) {
                     return PARSE_BADNOUN;
