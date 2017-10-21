@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall -ansi -pedantic -std=c99
 TARGET=parse
-OBJS=main.o objects.o data.o data_parse.o vocab.o
+OBJS=main.o objects.o data.o data_parse.o verblib.o vocab.o
 
 all: $(TARGET)
 
