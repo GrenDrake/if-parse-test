@@ -303,8 +303,8 @@ int word_in_property(object_t *obj, int pid, int word) {
     return 0;
 }
 
-object_t* match_noun(gamedata_t *gd, int *first_word) {
-    object_t *obj, *obj_list[16], *match = NULL;
+object_t* match_noun(gamedata_t *gd) {
+    object_t *obj, *obj_list[16];
     int queue;
 
     obj = scope_ceiling(gd, gd->player);
@@ -330,24 +330,35 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
         }
     }
 
-    printf("finding noun for %s\n", gd->words[*first_word].word);
+    object_t *match = NULL;
+    int match_strength = 0;
+    int prop_vocab = property_number(gd, "vocab");
+    printf("finding noun...\n");
     for (int i = 0; i < gd->search_count; ++i) {
-        printf("OBJECT ");
+        printf("   OBJECT ");
         object_property_print(gd->search[i], property_number(gd, "name"));
-        printf("\n");
 
-        if (word_in_property(gd->search[i],
-                                property_number(gd, "vocab"),
-                                gd->words[*first_word].word_no)) {
-            printf("   (matched)\n");
-            if (match) {
-                printf("   (too many!)\n");
-                return (object_t*)-1;
-            } else {
-                match = gd->search[i];
-            }
+        int words = 0;
+        int cur_word = gd->cur_word;
+        while (word_in_property(gd->search[i], prop_vocab,
+                                gd->words[cur_word].word_no)) {
+            ++words;
+            ++cur_word;
+        }
+        printf(" [%d]", words);
+        if (words > match_strength) {
+            printf("   (match)\n");
+            match = gd->search[i];
+            match_strength = words;
+        } else if (words == match_strength && words > 0) {
+            printf("   (too many!)\n");
+            match = (object_t*)-1;
+        } else {
+            printf("\n");
         }
     }
+
+    gd->cur_word += match_strength;
     return match;
 }
 
@@ -372,7 +383,7 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
             case GT_NOUN:
-                obj = match_noun(gd, &gd->cur_word);
+                obj = match_noun(gd);
                 if (!obj) {
                     return PARSE_BADNOUN;
                 } else if (obj == (object_t*)-1) {
@@ -382,7 +393,6 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                     ++gd->noun_count;
                 }
                 ++token_a;
-                ++gd->cur_word;
                 break;
             case GT_ANY:
                 ++token_a;
@@ -430,7 +440,7 @@ int parse(gamedata_t *gd) {
         }
         cur_action = cur_action->next;
     }
-    
+
     switch(best_result) {
         case PARSE_AMBIG:
             printf("Multiple items matched.\n");
