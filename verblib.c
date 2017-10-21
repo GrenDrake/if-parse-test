@@ -20,6 +20,7 @@ void move_sub(gamedata_t *gd);
 void inv_sub(gamedata_t *gd);
 void look_sub(gamedata_t *gd);
 void putin_sub(gamedata_t *gd);
+void examine_sub(gamedata_t *gd);
 
 
 /* ****************************************************************************
@@ -129,6 +130,8 @@ int dispatch_action(gamedata_t *gd) {
             putin_sub(gd);
             return 1;
         case ACT_EXAMINE:
+            examine_sub(gd);
+            return 1;
         default: 
             printf("Unhandled action #%d (%s)\n",
                    gd->action, gd->words[0].word);
@@ -264,5 +267,14 @@ void putin_sub(gamedata_t *gd) {
         }
         object_move(gd->objects[0], gd->objects[1]);
         printf("Done.\n");
+    }
+}
+
+void examine_sub(gamedata_t *gd) {
+    property_t *p = object_property_get(gd->objects[0], property_number(gd, "description"));
+    if (p && p->value.type == PT_STRING) {
+        printf("%s\n", (void*)p->value.d.ptr);
+    } else {
+        printf("It looks as expected.\n");
     }
 }

@@ -86,3 +86,5 @@
 (action 4 (<inv> <i> <inventory>) (<tall> <wide>))
 (action 5 (<look> <l>))
 (action 6 <put> noun (<on> <in>) noun)
+(action 7 (<x> <examine>) noun)
+(action 7 <look> <at> noun)
