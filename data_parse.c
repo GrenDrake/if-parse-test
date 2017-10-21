@@ -128,7 +128,7 @@ void dump_tokens(FILE *dest, token_t *tokens) {
             fprintf(dest, "%d", cur->number);
         if (cur->type == T_VOCAB)
             fprintf(dest, "<%s>", cur->text);
-        fprintf(dest, " (%p - %p - %p)\n", cur->prev, cur, cur->next);
+        fprintf(dest, " (%p - %p - %p)\n", (void*)cur->prev, (void*)cur, (void*)cur->next);
         cur = cur->next;
     }
 }

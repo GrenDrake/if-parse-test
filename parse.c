@@ -206,10 +206,10 @@ void (*cmd_dispatch[])(gamedata_t *gd) = {
 void testfunc(object_t *obj) {
     printf("obj #%02d :: %p -- parent %p -- first %p, sibling %p\n",
             obj->id,
-            obj,
-            obj->parent,
-            obj->first_child,
-            obj->sibling);
+            (void*)obj,
+            (void*)obj->parent,
+            (void*)obj->first_child,
+            (void*)obj->sibling);
     property_t *cur = obj->properties;
     while (cur) {
         printf("    prop %02d (%d) ", cur->id, cur->value.type);
@@ -305,8 +305,7 @@ int word_in_property(object_t *obj, int pid, int word) {
 
 object_t* match_noun(gamedata_t *gd, int *first_word) {
     object_t *obj, *obj_list[16], *match = NULL;
-    property_t *prop;
-    int queue, cur_word = *first_word;
+    int queue;
 
     obj = scope_ceiling(gd, gd->player);
 
@@ -355,7 +354,6 @@ object_t* match_noun(gamedata_t *gd, int *first_word) {
 int parse(gamedata_t *gd) {
     action_t *cact = gd->actions;
     object_t *obj;
-    property_t *prop;
 
     gd->noun_count = 0;
 
