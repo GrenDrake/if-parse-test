@@ -5,6 +5,21 @@
 
 #include "parse.h"
 
+void object_name_print(gamedata_t *gd, object_t *obj);
+void object_property_print(object_t *obj, int prop_num);
+
+void object_name_print(gamedata_t *gd, object_t *obj) {
+    int prop_article = property_number(gd, "article");
+    property_t *article = object_property_get(obj, prop_article);
+    if (article) {
+        printf("%s", (char*)article->value.d.ptr);
+        putchar(' ');
+    } else {
+        printf("a ");
+    }
+    object_property_print(obj, property_number(gd, "name"));
+}
+
 void object_property_print(object_t *obj, int prop_num) {
     property_t *prop = object_property_get(obj, prop_num);
     if (prop) {
@@ -14,7 +29,7 @@ void object_property_print(object_t *obj, int prop_num) {
     }
 }
 
-void print_list_horz(object_t *parent_obj) {
+void print_list_horz(gamedata_t *gd, object_t *parent_obj) {
     object_t *obj = parent_obj->first_child;
     while (obj) {
         if (obj != parent_obj->first_child) {
@@ -23,11 +38,11 @@ void print_list_horz(object_t *parent_obj) {
                 printf("and ");
             }
         }
-        object_property_print(obj, PI_NAME);
+        object_name_print(gd, obj);
 
         if (obj->first_child) {
             printf(" (containing ");
-            print_list_horz(obj);
+            print_list_horz(gd, obj);
             printf(")");
         }
 
@@ -35,28 +50,28 @@ void print_list_horz(object_t *parent_obj) {
     }
 }
 
-void print_list_vert_core(object_t *parent_obj, int depth) {
+void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth) {
     object_t *obj = parent_obj->first_child;
     while (obj) {
         for (int i = 0; i < depth; ++i) {
             printf("    ");
         }
-        object_property_print(obj, PI_NAME);
+        object_name_print(gd, obj);
         printf("\n");
 
         if (obj->first_child) {
-            print_list_vert_core(obj, depth+1);
+            print_list_vert_core(gd, obj, depth+1);
         }
 
         obj = obj->sibling;
     }
 }
 
-void print_list_vert(object_t *parent_obj) {
-    print_list_vert_core(parent_obj, 1);
+void print_list_vert(gamedata_t *gd, object_t *parent_obj) {
+    print_list_vert_core(gd, parent_obj, 1);
 }
 
-void print_location(object_t *location) {
+void print_location(gamedata_t *gd, object_t *location) {
     printf("\n**");
     object_property_print(location, PI_NAME);
     printf("**\n");
@@ -64,7 +79,7 @@ void print_location(object_t *location) {
     printf("\n");
     if (location->first_child) {
         printf("\nYou can see: ");
-        print_list_horz(location);
+        print_list_horz(gd, location);
         printf(".\n");
     }
 }
@@ -150,7 +165,7 @@ void move_sub(gamedata_t *gd) {
     if (prop) {
         if (prop->value.type == PT_OBJECT) {
             object_move(gd->player, prop->value.d.ptr);
-            print_location(gd->player->parent);
+            print_location(gd, gd->player->parent);
         } else if (prop->value.type == PT_STRING) {
             printf("%s", prop->value.d.ptr);
         }
@@ -166,11 +181,11 @@ void inv_sub(gamedata_t *gd) {
         return;
     }
     printf("You are carrying:\n");
-    print_list_vert(gd->player);
+    print_list_vert(gd, gd->player);
 }
 
 void look_sub(gamedata_t *gd) {
-    print_location(gd->player->parent);
+    print_location(gd, gd->player->parent);
 }
 
 void putin_sub(gamedata_t *gd) {
@@ -468,7 +483,7 @@ int main() {
 //    objectloop_depth_first(gd->root, testfunc);
 
     gd->player = object_get_by_ident(gd, "player");
-    print_location(gd->player->parent);
+    print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
         get_line(gd->input, MAX_INPUT_LENGTH-1);
 

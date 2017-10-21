@@ -34,6 +34,7 @@
 (object - kitchen
     name "apricot"
     vocab ( <apricot> )
+    article "an"
 )
 (object - kitchen
     name "turnip"
