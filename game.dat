@@ -13,6 +13,7 @@
     description "A small, unsteady table."
     vocab ( <table> )
     is_takable 0
+    is_container 1
 )
 (object - entryway
     name "chair"
@@ -25,7 +26,8 @@
 (object - entryway
     name "fireplace"
     vocab ( <fireplace> <fire> <place> )
-    isTakable 0
+    is_takable 0
+    is_container 1
 )
 
 
@@ -50,7 +52,11 @@
     description "A simple bedroom with a cot visible."
     east entryway
 )
-
+(object - bedroom
+    name "cot"
+    vocab ( <bed> <cot> )
+    is_takable 0
+)
 
 (object player entryway
     name "yourself" 
@@ -64,6 +70,12 @@
 (object - player 
     name "black umbrella"
     vocab ( <black> <umbrella> )
+)
+(object - player 
+    name "glass box"
+    vocab ( <glass> <box> )
+    is_container 1
+    is_open 0
 )
 
 (action 0 (<q> <quit>))

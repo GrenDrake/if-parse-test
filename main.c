@@ -191,14 +191,19 @@ void putin_sub(gamedata_t *gd) {
     } else if (object_contains(gd->objects[0], gd->objects[1])) {
         printf("Not possible.\n");
     } else {
+        property_t *p = object_property_get(gd->objects[1], property_number(gd, "is_container"));
+        if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
+            printf("That can't contain things.\n");
+            return;
+        }
+        p = object_property_get(gd->objects[1], property_number(gd, "is_open"));
+        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
+            printf("It's not open.\n");
+            return;
+        }
         object_move(gd->objects[0], gd->objects[1]);
         printf("Done.\n");
     }
-    printf("# PUT ");
-    object_property_print(gd->objects[0], PI_NAME);
-    printf(" IN ");
-    object_property_print(gd->objects[1], PI_NAME);
-    printf(" #\n");
 }
 
 void (*cmd_dispatch[])(gamedata_t *gd) = {
