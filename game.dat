@@ -59,19 +59,19 @@
 )
 
 (object player entryway
-    name "yourself" 
+    name "yourself"
     vocab ( <me> <self> )
 )
 
-(object - player 
+(object - player
     name "clear umbrella"
     vocab ( <clear> <umbrella> )
 )
-(object - player 
+(object - player
     name "black umbrella"
     vocab ( <black> <umbrella> )
 )
-(object - player 
+(object - player
     name "glass box"
     vocab ( <glass> <box> )
     is_container 1
@@ -87,6 +87,7 @@
 (action 0 (<q> <quit>))
 (action 1 (<get> <take>) noun)
 (action 2 <drop> noun)
+(action 3 scope compass)
 (action 3 (<go> <travel> <move>) scope compass)
 (action 4 (<inv> <i> <inventory>))
 (action 4 (<inv> <i> <inventory>) (<tall> <wide>))
