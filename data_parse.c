@@ -303,21 +303,25 @@ int parse_action(gamedata_t *gd, list_t *list) {
     }
 
     list_t *cur = list->child->next;
-    if (cur->type != T_INTEGER) {
-        printf("Action number must be integer.\n");
+    action_t *act = calloc(sizeof(action_t), 1);
+    if (cur->type == T_INTEGER) {
+        act->action_code = cur->number;
+        act->action_name = NULL;
+    } else if (cur->type == T_ATOM) {
+        act->action_code = 0;
+        act->action_name = cur->text;
+    } else {
+        printf("Action number must be integer or atom.\n");
         return 0;
     }
-    int code = cur->number;
+    
     cur = cur->next;
     if (!cur) {
         printf("Action has no grammar.\n");
         return 0;
     }
 
-    action_t *act = calloc(sizeof(action_t), 1);
-    act->action_code = code;
     int pos = 0;
-
     list_t *sub;
     while (cur) {
         switch(cur->type) {
@@ -694,6 +698,14 @@ int fix_references(gamedata_t *gd) {
 
     action_t *cura = gd->actions;
     while (cura) {
+        if (cura->action_name) {
+            symbol_t *symbol = symbol_get(gd, SYM_CONSTANT, cura->action_name);
+            if (!symbol) {
+                printf("Action code contains unknown symbol %s.\n", cura->action_name);
+            }
+            cura->action_code = symbol->d.value;
+            cura->action_name = NULL;
+        }
         for (int i = 0; i < GT_MAX_TOKENS; ++i) {
             if (cura->grammar[i].type == GT_SCOPE) {
                 char *name = cura->grammar[i].ptr;

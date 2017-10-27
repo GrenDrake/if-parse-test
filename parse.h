@@ -82,6 +82,7 @@ typedef struct GRAMMAR {
 
 typedef struct ACTION {
     int action_code;
+    const char *action_name;
     grammar_t grammar[GT_MAX_TOKENS];
 
     struct ACTION *next;
