@@ -374,6 +374,38 @@ int parse_action(gamedata_t *gd, list_t *list) {
     return 1;
 }
 
+int parse_constant(gamedata_t *gd, list_t *list) {
+    if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
+            || strcmp(list->child->text,"constant") || list->child->next == NULL) {
+        return 0;
+    }
+
+    list_t *cur = list->child->next;
+    if (cur->type != T_ATOM) {
+        printf("Constant name must be atom.\n");
+        return 0;
+    }
+    char *name = cur->text;
+    cur = cur->next;
+    if (!cur) {
+        printf("Constant has no value.\n");
+        return 0;
+    }
+    if (cur->next) {
+        printf("Constant may have only one value.\n");
+        return 0;
+    }
+    switch(cur->type) {
+        case T_INTEGER:
+            symbol_add_value(gd, name, SYM_CONSTANT, cur->number);
+            break;
+        default:
+            printf("Constant has unsopported value tyoe.\n");
+    }
+
+    return 1;
+}
+
 list_t* parse_list(token_t **place) {
     token_t *cur = *place;
 
@@ -584,6 +616,10 @@ gamedata_t* parse_file(const char *filename) {
             }
         } else if (strcmp(clist->child->text, "action") == 0) {
             if (!parse_action(gd, clist)) {
+                return NULL;
+            }
+        } else if (strcmp(clist->child->text, "constant") == 0) {
+            if (!parse_constant(gd, clist)) {
                 return NULL;
             }
         } else {

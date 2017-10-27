@@ -45,6 +45,7 @@
 
 #define SYM_OBJECT 0
 #define SYM_PROPERTY 1
+#define SYM_CONSTANT 2
 
 #define PARSE_MAX_OBJS 64
 #define PARSE_MAX_NOUNS 2

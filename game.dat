@@ -1,3 +1,7 @@
+(constant act-quit 0 )
+(constant act-take 1 )
+
+
 (object entryway -
     name "Entryway"
     description "A short, square segment of hallway between the interior of the house and the exterior."
