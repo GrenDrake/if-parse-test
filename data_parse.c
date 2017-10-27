@@ -579,7 +579,6 @@ gamedata_t* parse_file(const char *filename) {
     while (tokens->prev) {
         tokens = tokens->prev;
     }
-    dump_tokens(stdout, tokens);
     vocab_build();
 
     printf("Building lists...\n");
