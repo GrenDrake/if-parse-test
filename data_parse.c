@@ -34,6 +34,12 @@ typedef struct LIST {
     struct LIST *next;
 } list_t;
 
+const char *symbol_types[] = {
+    "object",
+    "property",
+    "constant",
+};
+
 // dumping data
 static void dump_list(FILE *dest, list_t *list);
 static void dump_lists(FILE *fp, list_t *lists);
@@ -103,17 +109,17 @@ void dump_lists(FILE *fp, list_t *lists) {
 }
 
 void dump_symbol_table(FILE *fp, gamedata_t *gd) {
-    fprintf(fp, "==================================================\n");
-    fprintf(fp, "Symbol Name                       Type  Value\n");
-    fprintf(fp, "--------------------------------------------------\n");
+    fprintf(fp, "======================================================\n");
+    fprintf(fp, "Symbol Name                       Type      Value\n");
+    fprintf(fp, "------------------------------------------------------\n");
     for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
         symbol_t *symbol = gd->symbols->buckets[i];
         while (symbol) {
-            fprintf(fp, "%-32s  %d     %p\n", symbol->name, symbol->type, symbol->d.ptr);
+            fprintf(fp, "%-32s  %-8s  %p\n", symbol->name, symbol_types[symbol->type], symbol->d.ptr);
             symbol = symbol->next;
         }
     }
-    fprintf(fp, "==================================================\n");
+    fprintf(fp, "======================================================\n");
 }
 
 void dump_tokens(FILE *dest, token_t *tokens) {
