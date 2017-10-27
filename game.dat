@@ -82,6 +82,10 @@
     is_open 0
 )
 
+(object topics -)
+(object - topics name "turnips" vocab (<turnip> <turnips>)
+    description "Rurnips are a kind of root vegtable.")
+
 (object compass -)
 (object - compass name "north" vocab (<n> <north>) dir_prop "north")
 (object - compass name "south" vocab (<s> <south>) dir_prop "south")
@@ -99,3 +103,4 @@
 (action 6 <put> noun (<on> <in>) noun)
 (action 7 (<x> <examine>) noun)
 (action 7 <look> <at> noun)
+(action 7 <what> (<is> <are>) scope topics)
