@@ -14,7 +14,7 @@ static unsigned vocab_size = 0;
 static vocab_t *vocab_list = NULL;
 
 void vocab_dump() {
-    printf("Vocabulary:");
+    printf("Vocabulary (%d words):", vocab_size);
     if (!vocab) {
         printf(" none!\n");
         return;
@@ -27,9 +27,9 @@ void vocab_dump() {
                 printf(" and");
             }
         }
-        printf(" %d:%s", i, vocab[i]);
+        printf(" '%s'", vocab[i]);
     }
-    printf("\nCount: %d\n", vocab_size);
+    printf("\n");
 }
 
 void vocab_raw_add(const char *the_word) {
