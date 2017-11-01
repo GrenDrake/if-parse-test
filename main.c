@@ -84,6 +84,8 @@ int tokenize(gamedata_t *gd) {
     if (count == 0) {
         printf("Pardon?\n");
         return 0;
+    } else {
+        gd->words[count].word_no = -1;
     }
 
     return 1;
