@@ -4,57 +4,10 @@
 #include <string.h>
 
 #include "parse.h"
-
-#define T_LIST    0
-#define T_ATOM    1
-#define T_STRING  2
-#define T_INTEGER 3
-#define T_VOCAB   4
-
-#define T_OPEN    98
-#define T_CLOSE   99
-
-typedef struct TOKEN {
-    int type;
-    int number;
-    char *text;
-
-    struct TOKEN *prev;
-    struct TOKEN *next;
-} token_t;
-
-
-typedef struct LIST {
-    int type;
-    int number;
-    char *text;
-    struct LIST *child;
-    struct LIST *last;
-
-    struct LIST *next;
-} list_t;
-
-const char *symbol_types[] = {
-    "object",
-    "property",
-    "constant",
-};
+#include "dparse.h"
 
 // dumping data
-static void dump_list(FILE *dest, list_t *list);
-static void dump_lists(FILE *fp, list_t *lists);
 void dump_symbol_table(FILE *fp, gamedata_t *gd);
-static void dump_tokens(FILE *dest, token_t *tokens);
-
-// list manipulation
-void list_add(list_t *list, list_t *item);
-list_t *list_create();
-void list_free(list_t *list);
-int list_size(list_t *list);
-
-// token manipulation
-static void token_add(token_t **tokens, token_t *token);
-static void token_free(token_t *token);
 
 // tokenizing
 static int valid_identifier(int ch);
@@ -71,43 +24,6 @@ static int fix_references(gamedata_t *gd);
 /* ****************************************************************************
  * Dumping data to a stream (for debugging)
  * ****************************************************************************/
-void dump_list(FILE *dest, list_t *list) {
-    list_t *pos = list->child;
-    fprintf(dest, "{");
-    while (pos) {
-        switch(pos->type) {
-            case T_LIST:
-                fprintf(dest, " ");
-                dump_list(dest, pos);
-                break;
-            case T_STRING:
-                fprintf(dest, " ~%s~", pos->text);
-                break;
-            case T_ATOM:
-                fprintf(dest, " %s", pos->text);
-                break;
-            case T_INTEGER:
-                fprintf(dest, " %d", pos->number);
-                break;
-            case T_VOCAB:
-                fprintf(dest, " <%d>", pos->number);
-                break;
-            default:
-                fprintf(dest, " [%d: unhandled]", pos->type);
-        }
-        pos = pos->next;
-    }
-    fprintf(dest, " }");
-}
-
-void dump_lists(FILE *fp, list_t *lists) {
-    while(lists) {
-        dump_list(fp, lists);
-        fprintf(fp, "\n");
-        lists = lists->next;
-    }
-}
-
 void dump_symbol_table(FILE *fp, gamedata_t *gd) {
     fprintf(fp, "======================================================\n");
     fprintf(fp, "Symbol Name                       Type      Value\n");
@@ -120,92 +36,6 @@ void dump_symbol_table(FILE *fp, gamedata_t *gd) {
         }
     }
     fprintf(fp, "======================================================\n");
-}
-
-void dump_tokens(FILE *dest, token_t *tokens) {
-    token_t *cur = tokens;
-    while (cur) {
-        fprintf(dest, "%d: ", cur->type);
-        if (cur->type == T_STRING)
-            fprintf(dest, "~%s~", cur->text);
-        if (cur->type == T_ATOM)
-            fprintf(dest, "=%s=", cur->text);
-        if (cur->type == T_INTEGER)
-            fprintf(dest, "%d", cur->number);
-        if (cur->type == T_VOCAB)
-            fprintf(dest, "<%s>", cur->text);
-        fprintf(dest, " (%p - %p - %p)\n", (void*)cur->prev, (void*)cur, (void*)cur->next);
-        cur = cur->next;
-    }
-}
-
-
-/* ****************************************************************************
- * List manipulation
- * ****************************************************************************/
-void list_add(list_t *list, list_t *item) {
-    if (!list || !item) return;
-    if (list->child) {
-        list->last->next = item;
-        list->last = item;
-    } else {
-        list->child = list->last = item;
-    }
-}
-
-list_t *list_create() {
-    list_t *list = calloc(sizeof(list_t), 1);
-    list->type = T_LIST;
-    return list;
-}
-
-void list_free(list_t *list) {
-    if (list->type == T_LIST) {
-        list_t *sublist = list->child;
-        while (sublist) {
-            list_t *next = sublist->next;
-            list_free(sublist);
-            sublist = next;
-        }
-    } else if (list->type == T_ATOM || list->type == T_STRING || list->type == T_VOCAB) {
-        free(list->text);
-    }
-    free(list);
-}
-
-int list_size(list_t *list) {
-    if (list->type != T_LIST || list->child == NULL) {
-        return 0;
-    }
-
-    int count = 0;
-    list_t *counter = list->child;
-    while (counter) {
-        ++count;
-        counter = counter->next;
-    }
-    return count;
-}
-
-
-/* ****************************************************************************
- * Token manipulation
- * ****************************************************************************/
-void token_add(token_t **tokens, token_t *token) {
-    if (*tokens == NULL) {
-        *tokens = token;
-    } else {
-        token->prev = *tokens;
-        (*tokens)->next = token;
-        *tokens = token;
-    }
-}
-
-void token_free(token_t *token) {
-    if (token->type == T_STRING || token->type == T_ATOM) {
-        free(token->text);
-    }
-    free(token);
 }
 
 
