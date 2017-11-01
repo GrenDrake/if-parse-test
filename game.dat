@@ -1,12 +1,3 @@
-(constant act-quit 0 )
-(constant act-take 1 )
-(constant act-drop 2 )
-(constant act-move 3 )
-(constant act-inv  4 )
-(constant act-look 5 )
-(constant act-put  6 )
-(constant act-examine 7 )
-
 
 (object entryway -
     name "Entryway"
@@ -98,15 +89,3 @@
 (object - compass name "east"  vocab (<e> <east>)  dir_prop "east")
 (object - compass name "west"  vocab (<w> <west>)  dir_prop "west")
 
-(action act-quit (<q> <quit>))
-(action act-take (<get> <take>) noun)
-(action act-drop <drop> noun)
-(action act-move scope compass)
-(action act-move (<go> <travel> <move>) scope compass)
-(action act-inv  (<inv> <i> <inventory>))
-(action act-inv  (<inv> <i> <inventory>) (<tall> <wide>))
-(action act-look (<look> <l>))
-(action act-put <put> noun (<on> <in>) noun)
-(action act-examine (<x> <examine>) noun)
-(action act-examine <look> <at> noun)
-(action act-examine <what> (<is> <are>) scope topics)

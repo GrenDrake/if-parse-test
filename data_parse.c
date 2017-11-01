@@ -49,10 +49,20 @@ int valid_identifier(int ch) {
     return 0;
 }
 
+void token_add(token_t **tokens, token_t **last_ptr, token_t *token) {
+    if (*last_ptr == NULL) {
+        *tokens = *last_ptr = token;
+    }
+    else {
+        (*last_ptr)->next = token;
+        *last_ptr = token;
+    }
+}
+
 token_t *tokenize(char *file) {
     if (!file) return NULL;
 
-    token_t *tokens = NULL;
+    token_t *tokens = NULL, *last_ptr = NULL;
     size_t pos = 0, filesize = strlen(file);
     while (pos < filesize) {
         if (file[pos] == '/' && pos+1 < filesize && file[pos+1] == '/') {
@@ -64,12 +74,12 @@ token_t *tokenize(char *file) {
         } else if (file[pos] == '(') {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_OPEN;
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
             ++pos;
         } else if (file[pos] == ')') {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_CLOSE;
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
             ++pos;
         } else if (isdigit(file[pos])) {
             char *token = &file[pos];
@@ -80,7 +90,7 @@ token_t *tokenize(char *file) {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_INTEGER;
             t->number = strtol(token, 0, 0);
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
         } else if (valid_identifier(file[pos])) {
             int start = pos;
             char *token = &file[pos];
@@ -90,7 +100,7 @@ token_t *tokenize(char *file) {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_ATOM;
             t->text = str_dupl_left(token, pos - start);
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
         } else if (file[pos] == '"') {
             ++pos;
             char *token = &file[pos];
@@ -101,7 +111,7 @@ token_t *tokenize(char *file) {
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_STRING;
             t->text = str_dupl(token);
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
         } else if (file[pos] == '<') {
             ++pos;
             char *token = &file[pos];
@@ -113,7 +123,7 @@ token_t *tokenize(char *file) {
             t->type = T_VOCAB;
             vocab_raw_add(token);
             t->text = str_dupl(token);
-            token_add(&tokens, t);
+            token_add(&tokens, &last_ptr, t);
         } else {
             printf("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
             ++pos;
@@ -144,7 +154,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
         printf("Action number must be integer or atom.\n");
         return 0;
     }
-    
+
     cur = cur->next;
     if (!cur) {
         printf("Action has no grammar.\n");
@@ -388,12 +398,18 @@ int parse_object(gamedata_t *gd, list_t *list) {
     return 1;
 }
 
-gamedata_t* parse_file(const char *filename) {
-    printf("Loading game data...\n");
+
+/* ****************************************************************************
+ * Parsing source files
+ * ****************************************************************************/
+token_t *master_token_list = NULL;
+
+int tokenize_file(const char *filename) {
+    printf("Tokenizing source file %s...\n", filename);
     FILE *fp = fopen(filename, "rt");
     if (!fp) {
-        fprintf(stderr, "Could not open file '%s'\n", filename);
-        return NULL;
+        fprintf(stderr, "FATAL: Could not open file '%s'\n", filename);
+        return 0;
     }
     fseek(fp, 0, SEEK_END);
     size_t filesize = ftell(fp);
@@ -403,21 +419,29 @@ gamedata_t* parse_file(const char *filename) {
     file[filesize] = 0;
     fclose(fp);
 
-
-    printf("Tokenizing game data...\n");
-    token_t *tokens = tokenize(file);
+    token_t *new_tokens = tokenize(file);
     free(file);
 
-
-    // reverse the token list
-    while (tokens->prev) {
-        tokens = tokens->prev;
+    if (master_token_list == NULL) {
+        master_token_list = new_tokens;
+    } else {
+        token_t *old_token = master_token_list;
+        while (old_token->next) {
+            old_token = old_token->next;
+        }
+        old_token->next = new_tokens;
     }
+
+    return 1;
+}
+
+
+gamedata_t* parse_tokens() {
     vocab_build();
 
     printf("Building lists...\n");
     list_t *lists = NULL, *last_list = NULL;
-    token_t *list_pos = tokens;
+    token_t *list_pos = master_token_list;
     while (list_pos) {
         list_t *list = parse_list(&list_pos);
         if (!list) {
@@ -478,11 +502,11 @@ gamedata_t* parse_file(const char *filename) {
     }
 
     printf("Data loaded. Freeing temporary memory...\n\n");
-    token_t *next;
-    while (tokens) {
-        next = tokens->next;
-        token_free(tokens);
-        tokens = next;
+    token_t *next, *here = master_token_list;
+    while (here) {
+        next = here->next;
+        token_free(here);
+        here = next;
     }
     list_t *next_list;
     while (lists) {

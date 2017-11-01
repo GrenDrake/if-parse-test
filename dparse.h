@@ -36,7 +36,6 @@ extern const char *symbol_types[];
 void dump_list(FILE *dest, list_t *list);
 void dump_tokens(FILE *dest, token_t *tokens);
 
-void token_add(token_t **tokens, token_t *token);
 void token_free(token_t *token);
 
 void list_add(list_t *list, list_t *item);

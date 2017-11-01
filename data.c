@@ -23,7 +23,10 @@ unsigned hash_string(const char *text) {
 }
 
 gamedata_t* load_data() {
-    gamedata_t *gd = parse_file("game.dat");
+    if (!tokenize_file("game.dat") || !tokenize_file("game2.dat")) {
+        return NULL;
+    }
+    gamedata_t *gd = parse_tokens();
     if (!gd) {
         printf("Error loading game data.\n");
         return NULL;

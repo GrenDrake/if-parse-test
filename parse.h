@@ -171,6 +171,7 @@ void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value);
 symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 
 
-gamedata_t* parse_file(const char *filename);
+int tokenize_file(const char *filename);
+gamedata_t* parse_tokens();
 
 #endif // PARSE_H

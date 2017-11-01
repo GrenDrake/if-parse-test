@@ -60,15 +60,6 @@ void dump_list(FILE *dest, list_t *list) {
 /* ****************************************************************************
  * Token manipulation
  * ****************************************************************************/
- void token_add(token_t **tokens, token_t *token) {
-    if (*tokens == NULL) {
-        *tokens = token;
-    } else {
-        token->prev = *tokens;
-        (*tokens)->next = token;
-        *tokens = token;
-    }
-}
 
 void token_free(token_t *token) {
     if (token->type == T_STRING || token->type == T_ATOM) {
