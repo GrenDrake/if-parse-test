@@ -3,6 +3,7 @@
 
 #include "parse.h"
 
+static void symboltable_free(symboltable_t *table);
 static void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
 
 gamedata_t *gamedata_create() {
@@ -42,6 +43,22 @@ void free_data(gamedata_t *gd) {
         free(gd->actions);
         gd->actions = next;
     }
+
+    symboltable_free(gd->symbols);
+    free(gd);
+}
+
+void symboltable_free(symboltable_t *table) {
+    for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
+        symbol_t *cur = table->buckets[i], *next;
+        while (cur) {
+            next = cur->next;
+            free(cur->name);
+            free(cur);
+            cur = next;
+        }
+    }
+    free(table);
 }
 
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
