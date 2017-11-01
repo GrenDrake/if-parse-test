@@ -201,7 +201,7 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 scope_within(gd, obj);
                 obj = match_noun(gd);
                 if (!obj) {
-                    return PARSE_BADNOUN;
+                    return token_a ? PARSE_BADNOUN : PARSE_NONMATCH;
                 } else if (obj == (object_t*)-1) {
                     return PARSE_AMBIG;
                 } else {
@@ -214,7 +214,7 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 scope_within(gd, (object_t*)action->grammar[token_a].ptr);
                 obj = match_noun(gd);
                 if (!obj) {
-                    return PARSE_BADNOUN;
+                    return token_a ? PARSE_BADNOUN : PARSE_NONMATCH;
                 } else if (obj == (object_t*)-1) {
                     return PARSE_AMBIG;
                 } else {
@@ -278,7 +278,7 @@ int parse(gamedata_t *gd) {
             printf("Not visible.\n");
             break;
         case PARSE_NONMATCH:
-            printf("Unrecognized command.\n");
+            printf("Unrecognized verb '%s'.\n", gd->words[0].word);
             break;
         case PARSE_BADTOKEN:
             printf("Parser error.\n");
