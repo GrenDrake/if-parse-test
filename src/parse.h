@@ -118,6 +118,7 @@ typedef struct GAMEDATA {
     const char **dictionary;
     action_t *actions;
     object_t *root;
+    object_t *gameinfo;
     object_t *player;
     symboltable_t *symbols;
 

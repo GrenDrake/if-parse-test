@@ -290,13 +290,37 @@ int parse(gamedata_t *gd) {
     return gd->action >= 0;
 }
 
+int game_init(gamedata_t *gd) {
+    gd->gameinfo = object_get_by_ident(gd, "gameinfo");
+    if (!gd->gameinfo) {
+        printf("FATAL: no gameinfo object\n");
+        free_data(gd);
+        return 0;
+    }
+
+    property_t *player_prop = object_property_get(gd->gameinfo, property_number(gd, "player"));
+    if (!player_prop || !player_prop->value.d.ptr) {
+        printf("FATAL: gameinfo does not define valid initial player object\n");
+        free_data(gd);
+        return 0;
+    }
+    gd->player = player_prop->value.d.ptr;
+
+    property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "intro"));
+    if (intro_prop && intro_prop->value.d.ptr) {
+        printf("%s\n", intro_prop->value.d.ptr);
+    }
+    
+    return 1;
+}
+
 int main() {
     gamedata_t *gd = load_data();
     if (!gd) return 1;
+    if (!game_init(gd)) return 1;
 
 //    objectloop_depth_first(gd->root, testfunc);
 
-    gd->player = object_get_by_ident(gd, "player");
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
         get_line(gd->input, MAX_INPUT_LENGTH-1);
