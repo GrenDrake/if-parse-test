@@ -50,12 +50,6 @@ void testfunc(object_t *obj) {
     }
 }
 
-
-void get_line(char *buffer, int length) {
-    printf("\n> ");
-    fgets(buffer, length, stdin);
-}
-
 int tokenize(gamedata_t *gd) {
     int in_word = 0, count = 0;
     memset(gd->words, 0, sizeof(cmd_token_t) * MAX_INPUT_WORDS);
@@ -324,13 +318,16 @@ int main() {
 
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
-        get_line(gd->input, MAX_INPUT_LENGTH-1);
+        printf("\n> ");
+        gd->input = read_line();
 
         if (!tokenize(gd) || !parse(gd)) {
+            free(gd->input);
             continue;
         }
 
         dispatch_action(gd);
+        free(gd->input);
     }
 
     printf("Goodbye!\n\n");

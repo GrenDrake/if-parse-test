@@ -127,7 +127,7 @@ typedef struct GAMEDATA {
     symboltable_t *symbols;
 
     int quit_game;
-    char input[MAX_INPUT_LENGTH];
+    unsigned char *input;
     cmd_token_t words[MAX_INPUT_WORDS];
     int cur_word;
     int action;
@@ -179,6 +179,7 @@ symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 int tokenize_file(const char *filename);
 gamedata_t* parse_tokens();
 
+char* read_line();
 void style_bold();
 void style_normal();
 void style_reverse();
