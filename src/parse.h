@@ -1,6 +1,10 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 0
+#define VERSION_BUILD 0
+
 #define MAX_INPUT_LENGTH 256
 #define MAX_INPUT_WORDS 32
 

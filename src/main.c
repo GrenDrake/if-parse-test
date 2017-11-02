@@ -306,11 +306,14 @@ int game_init(gamedata_t *gd) {
     }
     gd->player = player_prop->value.d.ptr;
 
+    printf("if-parse-test VERSION %d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
+    printf("--------------------------------------------------------------------------------\n\n");
+
     property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "intro"));
     if (intro_prop && intro_prop->value.d.ptr) {
         printf("%s\n", intro_prop->value.d.ptr);
     }
-    
+
     return 1;
 }
 
