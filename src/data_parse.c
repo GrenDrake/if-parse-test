@@ -493,9 +493,6 @@ gamedata_t* parse_tokens() {
         clist = clist->next;
     }
 
-    printf("Dumpng symbol table...\n");
-    dump_symbol_table(stdout, gd);
-
     printf("Setting object references...\n");
     if (!fix_references(gd)) {
         return NULL;
@@ -515,7 +512,6 @@ gamedata_t* parse_tokens() {
         lists = next_list;
     }
 
-    vocab_dump();
     return gd;
 }
 
