@@ -82,14 +82,16 @@ token_t *tokenize(char *file) {
             token_add(&tokens, &last_ptr, t);
             ++pos;
         } else if (isdigit(file[pos])) {
+            int start = pos;
             char *token = &file[pos];
             while (isdigit(file[pos])) {
                 ++pos;
             }
-            file[pos++] = 0;
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_INTEGER;
-            t->number = strtol(token, 0, 0);
+            char *tmp = str_dupl_left(token, pos - start);
+            t->number = strtol(tmp, 0, 0);
+            free(tmp);
             token_add(&tokens, &last_ptr, t);
         } else if (valid_identifier(file[pos])) {
             int start = pos;
