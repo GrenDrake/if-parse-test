@@ -157,7 +157,7 @@ void take_sub(gamedata_t *gd, input_t *input) {
     } else if (object_contains(gd->player, input->nouns[0])) {
         printf("Already taken.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[0], property_number(gd, "is_takable"));
+        property_t *p = object_property_get(input->nouns[0], property_number(gd, "is-takable"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("Impossible.\n");
         } else {
@@ -227,12 +227,12 @@ void putin_sub(gamedata_t *gd, input_t *input) {
     } else if (object_contains(input->nouns[0], input->nouns[1])) {
         printf("Not possible.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[1], property_number(gd, "is_container"));
+        property_t *p = object_property_get(input->nouns[1], property_number(gd, "is-container"));
         if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
             printf("That can't contain things.\n");
             return;
         }
-        p = object_property_get(input->nouns[1], property_number(gd, "is_open"));
+        p = object_property_get(input->nouns[1], property_number(gd, "is-open"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("It's not open.\n");
             return;
