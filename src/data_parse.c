@@ -309,11 +309,14 @@ list_t* parse_list(token_t **place) {
     return list;
 }
 
+#define MAX_PROPERTY_NAME 64
 int parse_object(gamedata_t *gd, list_t *list) {
     if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
             || strcmp(list->child->text,"object")) {
         return 0;
     }
+
+    int ident_prop = property_number(gd, "#internal-name");
 
     object_t *obj = object_create(gd->root);
     list_t *prop = list->child->next;
@@ -323,14 +326,16 @@ int parse_object(gamedata_t *gd, list_t *list) {
         return 0;
     }
     if (strcmp(prop->text, "-") != 0) {
-        object_property_add_string(obj, PI_IDENT, str_dupl(prop->text));
+        object_property_add_string(obj, ident_prop, str_dupl(prop->text));
         symbol_add_ptr(gd, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
         obj->parent_name = val->text;
     }
     prop = val->next;
+
     if (prop) val = prop->next;
+    char full_prop_name[MAX_PROPERTY_NAME] = { '#' };
     while (prop) {
         if (val == NULL) {
             printf("Found property without value.\n");
@@ -341,7 +346,8 @@ int parse_object(gamedata_t *gd, list_t *list) {
             return 0;
         }
 
-        int p_num = property_number(gd, prop->text);
+        strncpy(&full_prop_name[1], prop->text, MAX_PROPERTY_NAME-2);
+        int p_num = property_number(gd, full_prop_name);
         if (val->type == T_STRING) {
             object_property_add_string(obj, p_num, str_dupl(val->text));
         } else if (val->type == T_ATOM) {

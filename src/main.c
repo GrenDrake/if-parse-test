@@ -114,7 +114,6 @@ int tokenize(input_t *input) {
         }
     }
     if (count == 0) {
-        printf("Pardon?\n");
         return 0;
     } else {
         input->word_count = count;
@@ -139,12 +138,12 @@ int tokenize(input_t *input) {
 object_t* match_noun(gamedata_t *gd, input_t *input) {
     object_t *match = NULL;
     int match_strength = 0;
-    int prop_vocab = property_number(gd, "vocab");
+    int prop_vocab = property_number(gd, "#vocab");
 
     printf("finding noun...\n");
     for (int i = 0; i < gd->search_count; ++i) {
         printf("   OBJECT ");
-        object_property_print(gd->search[i], property_number(gd, "name"));
+        object_property_print(gd->search[i], property_number(gd, "#name"));
 
         int words = 0;
         int cur_word = input->cur_word;
@@ -279,6 +278,7 @@ int parse(gamedata_t *gd, input_t *input) {
         action_iter = action_iter->next;
     }
 
+    input->action = -1;
     switch(best_result) {
         case PARSE_AMBIG:
             printf("Multiple items matched.\n");
@@ -311,7 +311,7 @@ int game_init(gamedata_t *gd) {
         return 0;
     }
 
-    property_t *player_prop = object_property_get(gd->gameinfo, property_number(gd, "player"));
+    property_t *player_prop = object_property_get(gd->gameinfo, property_number(gd, "#player"));
     if (!player_prop || !player_prop->value.d.ptr) {
         printf("FATAL: gameinfo does not define valid initial player object\n");
         free_data(gd);
@@ -322,7 +322,7 @@ int game_init(gamedata_t *gd) {
     printf("if-parse-test VERSION %d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
     printf("--------------------------------------------------------------------------------\n\n");
 
-    property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "intro"));
+    property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "#intro"));
     if (intro_prop && intro_prop->value.d.ptr) {
         printf("%s\n", intro_prop->value.d.ptr);
     }

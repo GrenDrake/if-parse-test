@@ -14,15 +14,6 @@
 #define PARSE_BADTOKEN -4
 #define OBJ_AMBIG ((object_t*)-1)
 
-#define PI_NAME 1
-#define PI_DESC 2
-#define PI_NORTH 3
-#define PI_EAST 4
-#define PI_SOUTH 5
-#define PI_WEST 6
-#define PI_VOCAB 7
-#define PI_IDENT 8
-
 #define PT_STRING 1
 #define PT_OBJECT 2
 #define PT_ARRAY 3
