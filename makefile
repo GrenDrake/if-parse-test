@@ -9,6 +9,6 @@ $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET)
 
 clean:
-	$(RM) *.o $(TARGET)
+	$(RM) src/*.o $(TARGET)
 
 .PHONY: clean
