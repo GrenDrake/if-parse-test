@@ -90,9 +90,13 @@ void print_list_vert(gamedata_t *gd, object_t *parent_obj) {
 }
 
 void print_location(gamedata_t *gd, object_t *location) {
-    printf("\n**");
+    putchar('\n');
+    style_bold();
+    printf("**");
     object_property_print(location, PI_NAME);
-    printf("**\n");
+    printf("**");
+    style_normal();
+    putchar('\n');
     object_property_print(location, PI_DESC);
     printf("\n");
     if (location->first_child) {
@@ -132,7 +136,7 @@ int dispatch_action(gamedata_t *gd) {
         case ACT_EXAMINE:
             examine_sub(gd);
             return 1;
-        default: 
+        default:
             printf("Unhandled action #%d (%s)\n",
                    gd->action, gd->words[0].word);
             return 0;

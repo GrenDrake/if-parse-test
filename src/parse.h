@@ -179,4 +179,7 @@ symbol_t* symbol_get(gamedata_t *gd, int type, const char *name);
 int tokenize_file(const char *filename);
 gamedata_t* parse_tokens();
 
+void style_bold();
+void style_normal();
+void style_reverse();
 #endif // PARSE_H
