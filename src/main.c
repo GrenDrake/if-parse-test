@@ -5,87 +5,23 @@
 
 #include "parse.h"
 
+object_t* scope_ceiling(gamedata_t *gd, object_t *obj);
+int word_in_property(object_t *obj, int pid, int word);
+void add_to_scope(gamedata_t *gd, object_t *obj);
+void scope_within(gamedata_t *gd, object_t *ceiling);
+
 void object_name_print(gamedata_t *gd, object_t *obj);
 void object_property_print(object_t *obj, int prop_num);
 void print_location(gamedata_t *gd, object_t *location);
-int dispatch_action(gamedata_t *gd);
+int dispatch_action(gamedata_t *gd, input_t *input);
+int game_init(gamedata_t *gd);
 
 
-void testfunc(object_t *obj) {
-    printf("obj #%02d :: %p -- parent %p -- first %p, sibling %p\n",
-            obj->id,
-            (void*)obj,
-            (void*)obj->parent,
-            (void*)obj->first_child,
-            (void*)obj->sibling);
-    property_t *cur = obj->properties;
-    while (cur) {
-        printf("    prop %02d (%d) ", cur->id, cur->value.type);
-        switch(cur->value.type) {
-            case PT_INTEGER:
-                printf("%d", cur->value.d.num);
-                break;
-            case PT_OBJECT:
-                printf("%p: #%d", cur->value.d.ptr, ((object_t*)cur->value.d.ptr)->id);
-                break;
-            case PT_STRING:
-                printf("%p: ~%s~", cur->value.d.ptr, (char*)cur->value.d.ptr);
-                break;
-            case PT_ARRAY: {
-                printf("%p: [%d]", cur->value.d.ptr, cur->value.array_size);
-                value_t *arr = cur->value.d.ptr;
-                for (int i = 0; i < cur->value.array_size; ++i) {
-                    switch(arr[i].type) {
-                        case PT_STRING: printf(" ~%s~", arr[i].d.ptr); break;
-                        case PT_INTEGER: printf(" %d", arr[i].d.num); break;
-                        case PT_OBJECT: printf(" (obj#%d)", ((object_t*)arr[i].d.ptr)->id); break;
-                        default: printf(" (type#%d)", arr[i].type);
-                    }
-                }
-                break; }
+/* ************************************************************************ *
+ * Interacting with the world model
+ * ************************************************************************ */
 
-        }
-        printf("\n");
-        cur = cur->next;
-    }
-}
-
-int tokenize(gamedata_t *gd) {
-    int in_word = 0, count = 0;
-    memset(gd->words, 0, sizeof(cmd_token_t) * MAX_INPUT_WORDS);
-    for (int i = 0; i < MAX_INPUT_LENGTH; ++i) {
-        unsigned char here = gd->input[i];
-        if (isspace(here) || here == 0) {
-            if (in_word) {
-                in_word = 0;
-                gd->words[count].end = i;
-                gd->input[i] = 0;
-                gd->words[count].word_no = vocab_index(gd->words[count].word);
-                ++count;
-            }
-            if (here != 0) {
-                continue;
-            } else {
-                break;
-            }
-        }
-        if (!in_word) {
-            gd->words[count].start = i;
-            gd->words[count].word = &gd->input[i];
-            in_word = 1;
-        }
-    }
-    if (count == 0) {
-        printf("Pardon?\n");
-        return 0;
-    } else {
-        gd->words[count].word_no = -1;
-    }
-
-    return 1;
-}
-
-object_t* scope_ceiling(gamedata_t *gd, object_t *obj) {
+ object_t* scope_ceiling(gamedata_t *gd, object_t *obj) {
     if (!obj) return NULL;
     while (obj->parent != gd->root) {
         obj = obj->parent;
@@ -135,19 +71,85 @@ void scope_within(gamedata_t *gd, object_t *ceiling) {
     }
 }
 
-object_t* match_noun(gamedata_t *gd) {
+/* ************************************************************************ *
+ * Tokenizing player input
+ * ************************************************************************ */
+
+/**
+Takes text input by the player and turns it into a sequence of words and
+vocab word numbers.
+
+Returns false if the input text was empty or contained only whitespace;
+returns true otherwise.
+*/
+int tokenize(input_t *input) {
+    int in_word = 0, count = 0;
+    memset(input->words, 0, sizeof(cmd_token_t) * MAX_INPUT_WORDS);
+
+    if (!input) {
+        input->words[0].word_no = -1;
+        return 0;
+    }
+
+    for (int i = 0; input->input[i]; ++i) {
+        unsigned char here = input->input[i];
+
+        if (isspace(here) || here == 0) {
+            if (in_word) {
+                in_word = 0;
+                input->input[i] = 0;
+                input->words[count].word_no = vocab_index(input->words[count].word);
+                ++count;
+            }
+            if (here != 0) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        if (!in_word) {
+            input->words[count].word = &input->input[i];
+            in_word = 1;
+        }
+    }
+    if (count == 0) {
+        printf("Pardon?\n");
+        return 0;
+    } else {
+        input->word_count = count;
+        input->words[count].word_no = -1;
+    }
+
+    return 1;
+}
+
+/* ************************************************************************ *
+ * Parsing tokenized input
+ * ************************************************************************ */
+
+ /**
+ Try and match part of the player's input to a noun in the currently
+ defined scope.
+
+ Returns the object found if a single match is made, returns NULL if
+ no match is made, and returns OBJ_AMBIG if multiple matches exist, but
+ a decision between them could not be made.
+ */
+object_t* match_noun(gamedata_t *gd, input_t *input) {
     object_t *match = NULL;
     int match_strength = 0;
     int prop_vocab = property_number(gd, "vocab");
+
     printf("finding noun...\n");
     for (int i = 0; i < gd->search_count; ++i) {
         printf("   OBJECT ");
         object_property_print(gd->search[i], property_number(gd, "name"));
 
         int words = 0;
-        int cur_word = gd->cur_word;
+        int cur_word = input->cur_word;
         while (word_in_property(gd->search[i], prop_vocab,
-                                gd->words[cur_word].word_no)) {
+                                input->words[cur_word].word_no)) {
             ++words;
             ++cur_word;
         }
@@ -158,34 +160,40 @@ object_t* match_noun(gamedata_t *gd) {
             match_strength = words;
         } else if (words == match_strength && words > 0) {
             printf("   (too many!)\n");
-            match = (object_t*)-1;
+            match = OBJ_AMBIG;
         } else {
             printf("\n");
         }
     }
 
-    gd->cur_word += match_strength;
+    input->cur_word += match_strength;
     return match;
 }
 
-int try_parse_action(gamedata_t *gd, action_t *action) {
-    int token_a = 0;
-    gd->cur_word = 0;
+/**
+Try to parse the player's input as a specific action.
+
+Returns the action's action number if successful. On failure, returns an
+error code less than 0.
+*/
+int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
+    int token_no = 0;
+    input->cur_word = 0;
     object_t *obj;
 
     while (1) {
-        if (action->grammar[token_a].type == GT_END) {
-            if (!gd->words[gd->cur_word].word) {
+        if (action->grammar[token_no].type == GT_END) {
+            if (input->cur_word == input->word_count) {
                 return action->action_code;
             } else {
                 return PARSE_NONMATCH;
             }
-        } else if (!gd->words[gd->cur_word].word) {
+        } else if (input->cur_word >= input->word_count) {
             return PARSE_NONMATCH;
         }
 
         gd->search_count = 0;
-        switch(action->grammar[token_a].type) {
+        switch(action->grammar[token_no].type) {
             case GT_END:
                 printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
@@ -193,44 +201,44 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
                 obj = scope_ceiling(gd, gd->player);
                 add_to_scope(gd, obj);
                 scope_within(gd, obj);
-                obj = match_noun(gd);
+                obj = match_noun(gd, input);
                 if (!obj) {
-                    return token_a ? PARSE_BADNOUN : PARSE_NONMATCH;
-                } else if (obj == (object_t*)-1) {
+                    return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
+                } else if (obj == OBJ_AMBIG) {
                     return PARSE_AMBIG;
                 } else {
-                    gd->objects[gd->noun_count] = obj;
-                    ++gd->noun_count;
+                    input->nouns[input->noun_count] = obj;
+                    ++input->noun_count;
                 }
-                ++token_a;
+                ++token_no;
                 break;
             case GT_SCOPE:
-                scope_within(gd, (object_t*)action->grammar[token_a].ptr);
-                obj = match_noun(gd);
+                scope_within(gd, (object_t*)action->grammar[token_no].ptr);
+                obj = match_noun(gd, input);
                 if (!obj) {
-                    return token_a ? PARSE_BADNOUN : PARSE_NONMATCH;
-                } else if (obj == (object_t*)-1) {
+                    return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
+                } else if (obj == OBJ_AMBIG) {
                     return PARSE_AMBIG;
                 } else {
-                    gd->objects[gd->noun_count] = obj;
-                    ++gd->noun_count;
+                    input->nouns[input->noun_count] = obj;
+                    ++input->noun_count;
                 }
-                ++token_a;
+                ++token_no;
                 break;
             case GT_ANY:
-                ++token_a;
-                ++gd->cur_word;
+                ++token_no;
+                ++input->cur_word;
                 break;
             case GT_WORD:
-                if (gd->words[gd->cur_word].word_no == action->grammar[token_a].value) {
-                    while (action->grammar[token_a].flags & GF_ALT) {
-                        ++token_a;
+                if (input->words[input->cur_word].word_no == action->grammar[token_no].value) {
+                    while (action->grammar[token_no].flags & GF_ALT) {
+                        ++token_no;
                     }
-                    ++token_a;
-                    ++gd->cur_word;
+                    ++token_no;
+                    ++input->cur_word;
                 } else {
-                    if (action->grammar[token_a].flags & GF_ALT) {
-                        ++token_a;
+                    if (action->grammar[token_no].flags & GF_ALT) {
+                        ++token_no;
                     } else {
                         return PARSE_NONMATCH;
                     }
@@ -242,26 +250,33 @@ int try_parse_action(gamedata_t *gd, action_t *action) {
     }
 }
 
-int parse(gamedata_t *gd) {
-    action_t *cur_action = gd->actions;
-    int best_result = PARSE_BADTOKEN;
-    gd->action = PARSE_BADTOKEN;
-    gd->noun_count = 0;
+/**
+Try the parse the player's tokenize command as an action. If a match is
+found, the relevent fields in the input data will be filled out.
 
-    if (gd->words[0].word_no == -1) {
-        printf("Unknown word '%s'.\n", gd->words[0].word);
+Returns false if not matching action line could be found; returns true
+otherwise.
+*/
+int parse(gamedata_t *gd, input_t *input) {
+    action_t *action_iter = gd->actions;
+    input->noun_count = 0;
+
+    if (input->words[0].word_no == -1) {
+        printf("Unknown word '%s'.\n", input->words[0].word);
+        input->action = PARSE_BADTOKEN;
         return 0;
     }
 
-    while (cur_action && best_result < 0) {
-        int result = try_parse_action(gd, cur_action);
+    int best_result = PARSE_BADTOKEN;
+    while (action_iter && best_result < 0) {
+        int result = try_parse_action(gd, input, action_iter);
         if (best_result < result) {
             best_result = result;
         }
         if (result >= 0) {
             break;
         }
-        cur_action = cur_action->next;
+        action_iter = action_iter->next;
     }
 
     switch(best_result) {
@@ -272,17 +287,21 @@ int parse(gamedata_t *gd) {
             printf("Not visible.\n");
             break;
         case PARSE_NONMATCH:
-            printf("Unrecognized verb '%s'.\n", gd->words[0].word);
+            printf("Unrecognized verb '%s'.\n", input->words[0].word);
             break;
         case PARSE_BADTOKEN:
             printf("Parser error.\n");
             break;
         default:
-            gd->action = best_result;
+            input->action = best_result;
     }
 
-    return gd->action >= 0;
+    return input->action >= 0;
 }
+
+/* ************************************************************************ *
+ * Main game loop
+ * ************************************************************************ */
 
 int game_init(gamedata_t *gd) {
     gd->gameinfo = object_get_by_ident(gd, "gameinfo");
@@ -311,6 +330,8 @@ int game_init(gamedata_t *gd) {
     return 1;
 }
 
+
+
 int main() {
     gamedata_t *gd = load_data();
     if (!gd) return 1;
@@ -319,15 +340,22 @@ int main() {
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
         printf("\n> ");
-        gd->input = read_line();
+        input_t input = {0};
+        input.input = read_line();
 
-        if (!tokenize(gd) || !parse(gd)) {
-            free(gd->input);
+        if (!tokenize(&input)) {
+            printf("Pardon?\n");
+            free(input.input);
             continue;
         }
 
-        dispatch_action(gd);
-        free(gd->input);
+        if (!parse(gd, &input)) {
+            free(input.input);
+            continue;
+        }
+
+        dispatch_action(gd, &input);
+        free(input.input);
     }
 
     printf("Goodbye!\n\n");

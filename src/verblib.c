@@ -11,16 +11,16 @@ void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
 void print_list_vert(gamedata_t *gd, object_t *parent_obj);
 void print_location(gamedata_t *gd, object_t *location);
 
-int dispatch_action(gamedata_t *gd);
+int dispatch_action(gamedata_t *gd, input_t *input);
 
-void quit_sub(gamedata_t *gd);
-void take_sub(gamedata_t *gd);
-void drop_sub(gamedata_t *gd);
-void move_sub(gamedata_t *gd);
-void inv_sub(gamedata_t *gd);
-void look_sub(gamedata_t *gd);
-void putin_sub(gamedata_t *gd);
-void examine_sub(gamedata_t *gd);
+void quit_sub(gamedata_t *gd, input_t *input);
+void take_sub(gamedata_t *gd, input_t *input);
+void drop_sub(gamedata_t *gd, input_t *input);
+void move_sub(gamedata_t *gd, input_t *input);
+void inv_sub(gamedata_t *gd, input_t *input);
+void look_sub(gamedata_t *gd, input_t *input);
+void putin_sub(gamedata_t *gd, input_t *input);
+void examine_sub(gamedata_t *gd, input_t *input);
 
 
 /* ****************************************************************************
@@ -110,35 +110,35 @@ void print_location(gamedata_t *gd, object_t *location) {
 /* ****************************************************************************
  * Verb dispatching
  * ****************************************************************************/
-int dispatch_action(gamedata_t *gd) {
-    switch(gd->action) {
+int dispatch_action(gamedata_t *gd, input_t *input) {
+    switch(input->action) {
         case ACT_QUIT:
-            quit_sub(gd);
+            quit_sub(gd, input);
             return 1;
         case ACT_TAKE:
-            take_sub(gd);
+            take_sub(gd, input);
             return 1;
         case ACT_DROP:
-            drop_sub(gd);
+            drop_sub(gd, input);
             return 1;
         case ACT_MOVE:
-            move_sub(gd);
+            move_sub(gd, input);
             return 1;
         case ACT_INVENTORY:
-            inv_sub(gd);
+            inv_sub(gd, input);
             return 1;
         case ACT_LOOK:
-            look_sub(gd);
+            look_sub(gd, input);
             return 1;
         case ACT_PUTIN:
-            putin_sub(gd);
+            putin_sub(gd, input);
             return 1;
         case ACT_EXAMINE:
-            examine_sub(gd);
+            examine_sub(gd, input);
             return 1;
         default:
             printf("Unhandled action #%d (%s)\n",
-                   gd->action, gd->words[0].word);
+                    input->action, input->words[0].word);
             return 0;
     }
 }
@@ -147,40 +147,40 @@ int dispatch_action(gamedata_t *gd) {
 /* ****************************************************************************
  * Verb methods
  * ****************************************************************************/
-void quit_sub(gamedata_t *gd) {
+void quit_sub(gamedata_t *gd, input_t *input) {
     gd->quit_game = 1;
 }
 
-void take_sub(gamedata_t *gd) {
-    if (gd->objects[0] == gd->player) {
+void take_sub(gamedata_t *gd, input_t *input) {
+    if (input->nouns[0] == gd->player) {
         printf("Cannot take yourself.\n");
-    } else if (object_contains(gd->player, gd->objects[0])) {
+    } else if (object_contains(gd->player, input->nouns[0])) {
         printf("Already taken.\n");
     } else {
-        property_t *p = object_property_get(gd->objects[0], property_number(gd, "is_takable"));
+        property_t *p = object_property_get(input->nouns[0], property_number(gd, "is_takable"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("Impossible.\n");
         } else {
-            object_move(gd->objects[0], gd->player);
+            object_move(input->nouns[0], gd->player);
             printf("Taken.\n");
         }
     }
 }
 
-void drop_sub(gamedata_t *gd) {
-    if (gd->objects[0] == gd->player) {
+void drop_sub(gamedata_t *gd, input_t *input) {
+    if (input->nouns[0] == gd->player) {
         printf("Cannot drop yourself.\n");
-    } else if (!object_contains(gd->player, gd->objects[0])) {
+    } else if (!object_contains(gd->player, input->nouns[0])) {
         printf("Not carried.\n");
     } else {
-        object_move(gd->objects[0], gd->player->parent);
+        object_move(input->nouns[0], gd->player->parent);
         printf("Dropped.\n");
     }
 }
 
 
-void move_sub(gamedata_t *gd) {
-    property_t *p = object_property_get(gd->objects[0], property_number(gd, "dir_prop"));
+void move_sub(gamedata_t *gd, input_t *input) {
+    property_t *p = object_property_get(input->nouns[0], property_number(gd, "dir_prop"));
     if (!p || p->value.type != PT_STRING) {
         printf("Malformed direction.\n");
         return;
@@ -199,13 +199,13 @@ void move_sub(gamedata_t *gd) {
     }
 }
 
-void inv_sub(gamedata_t *gd) {
+void inv_sub(gamedata_t *gd, input_t *input) {
     object_t *cur = gd->player->first_child;
     if (!cur) {
         printf("You are carrying nothing.\n");
         return;
     }
-    if (gd->words[1].word && gd->words[1].word_no == vocab_index("wide")) {
+    if (input->words[1].word && input->words[1].word_no == vocab_index("wide")) {
         printf("You are carrying: ");
         print_list_horz(gd, gd->player);
         putchar('\n');
@@ -215,35 +215,35 @@ void inv_sub(gamedata_t *gd) {
     }
 }
 
-void look_sub(gamedata_t *gd) {
+void look_sub(gamedata_t *gd, input_t *input) {
     print_location(gd, gd->player->parent);
 }
 
-void putin_sub(gamedata_t *gd) {
-    if (gd->objects[0] == gd->player || gd->objects[1] == gd->player) {
+void putin_sub(gamedata_t *gd, input_t *input) {
+    if (input->nouns[0] == gd->player || input->nouns[1] == gd->player) {
         printf("Cannot put yourself somewhere.\n");
-    } else if (object_contains(gd->objects[1], gd->objects[0])) {
+    } else if (object_contains(input->nouns[1], input->nouns[0])) {
         printf("Already there.\n");
-    } else if (object_contains(gd->objects[0], gd->objects[1])) {
+    } else if (object_contains(input->nouns[0], input->nouns[1])) {
         printf("Not possible.\n");
     } else {
-        property_t *p = object_property_get(gd->objects[1], property_number(gd, "is_container"));
+        property_t *p = object_property_get(input->nouns[1], property_number(gd, "is_container"));
         if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
             printf("That can't contain things.\n");
             return;
         }
-        p = object_property_get(gd->objects[1], property_number(gd, "is_open"));
+        p = object_property_get(input->nouns[1], property_number(gd, "is_open"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("It's not open.\n");
             return;
         }
-        object_move(gd->objects[0], gd->objects[1]);
+        object_move(input->nouns[0], input->nouns[1]);
         printf("Done.\n");
     }
 }
 
-void examine_sub(gamedata_t *gd) {
-    property_t *p = object_property_get(gd->objects[0], property_number(gd, "description"));
+void examine_sub(gamedata_t *gd, input_t *input) {
+    property_t *p = object_property_get(input->nouns[0], property_number(gd, "description"));
     if (p && p->value.type == PT_STRING) {
         printf("%s\n", (void*)p->value.d.ptr);
     } else {

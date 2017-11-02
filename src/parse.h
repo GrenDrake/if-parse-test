@@ -12,6 +12,7 @@
 #define PARSE_BADNOUN -2
 #define PARSE_NONMATCH -3
 #define PARSE_BADTOKEN -4
+#define OBJ_AMBIG ((object_t*)-1)
 
 #define PI_NAME 1
 #define PI_DESC 2
@@ -70,13 +71,6 @@ typedef struct SYMBOL_TABLE {
     symbol_t *buckets[SYMBOL_TABLE_BUCKETS];
 } symboltable_t;
 
-typedef struct CMD_TOKEN {
-    int word_no;
-    const char *word;
-    int start;
-    int end;
-} cmd_token_t;
-
 typedef struct GRAMMAR {
     int type;
     int value;
@@ -118,6 +112,22 @@ typedef struct OBJECT {
     struct OBJECT *sibling;
 } object_t;
 
+typedef struct CMD_TOKEN {
+    int word_no;
+    const char *word;
+} cmd_token_t;
+
+typedef struct COMMAND_INPUT {
+    char *input;
+
+    unsigned word_count, cur_word;
+    cmd_token_t words[MAX_INPUT_WORDS];
+
+    int action;
+    unsigned noun_count;
+    object_t *nouns[PARSE_MAX_NOUNS];
+} input_t;
+
 typedef struct GAMEDATA {
     const char **dictionary;
     action_t *actions;
@@ -127,14 +137,8 @@ typedef struct GAMEDATA {
     symboltable_t *symbols;
 
     int quit_game;
-    unsigned char *input;
-    cmd_token_t words[MAX_INPUT_WORDS];
-    int cur_word;
-    int action;
     int search_count;
     object_t *search[PARSE_MAX_OBJS];
-    int noun_count;
-    object_t *objects[PARSE_MAX_NOUNS];
 } gamedata_t;
 
 
