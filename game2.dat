@@ -1,15 +1,15 @@
-(constant act-quit 0 )
-(constant act-take 1 )
-(constant act-drop 2 )
-(constant act-move 3 )
-(constant act-inv  4 )
-(constant act-look 5 )
-(constant act-put  6 )
-(constant act-examine 7 )
+(constant act-quit 0)
+(constant act-take 1)
+(constant act-drop 2)
+(constant act-move 3)
+(constant act-inv  4)
+(constant act-look 5)
+(constant act-put  6)
+(constant act-examine 7)
 
-(object gameinfo - 
+(object gameinfo -
     player player
-    intro "You awaken in a strange house with no idea how you got there.")
+    intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!")
 
 (action act-quit (<q> <quit>))
 (action act-take (<get> <take>) noun)
