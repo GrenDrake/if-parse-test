@@ -27,15 +27,36 @@ void examine_sub(gamedata_t *gd, input_t *input);
  * Utility methods
  * ****************************************************************************/
 void object_name_print(gamedata_t *gd, object_t *obj) {
-    int prop_article = property_number(gd, "#article");
-    property_t *article = object_property_get(obj, prop_article);
-    if (article) {
-        printf("%s", (char*)article->value.d.ptr);
-        putchar(' ');
-    } else {
-        printf("a ");
+    int prop_isproper = property_number(gd, "#is-proper");
+    int prop_name = property_number(gd, "#name");
+
+    int is_proper = 0;
+    property_t *proper = object_property_get(obj, prop_isproper);
+    if (proper && proper->value.type == PT_INTEGER && proper->value.d.num == 1) {
+        is_proper = 1;
     }
-    object_property_print(obj, property_number(gd, "#name"));
+
+    if (!is_proper) {
+        int prop_article = property_number(gd, "#article");
+        property_t *article = object_property_get(obj, prop_article);
+        if (article) {
+            printf("%s", (char*)article->value.d.ptr);
+            putchar(' ');
+        } else {
+            property_t *name = object_property_get(obj, prop_name);
+            int first_letter = 0;
+            if (name && name->value.d.ptr) {
+                first_letter = ((char*)name->value.d.ptr)[0];
+            }
+
+            if (first_letter == 'a' || first_letter == 'u' || first_letter == 'i' || first_letter == 'e' || first_letter == 'o') {
+                printf("an ");
+            } else {
+                printf("a ");
+            }
+        }
+    }
+    object_property_print(obj, prop_name);
 }
 
 void object_property_print(object_t *obj, int prop_num) {

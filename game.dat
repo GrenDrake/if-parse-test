@@ -61,6 +61,7 @@
 
 (object player entryway
     name "yourself"
+    is-proper 1
     vocab ( <me> <self> )
 )
 
