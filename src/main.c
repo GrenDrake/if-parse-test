@@ -322,8 +322,6 @@ int main() {
     if (!gd) return 1;
     if (!game_init(gd)) return 1;
 
-//    objectloop_depth_first(gd->root, testfunc);
-
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
         get_line(gd->input, MAX_INPUT_LENGTH-1);
