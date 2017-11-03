@@ -4,13 +4,6 @@
 
 #include "parse.h"
 
-void object_name_print(gamedata_t *gd, object_t *obj);
-void object_property_print(object_t *obj, int prop_num);
-void print_list_horz(gamedata_t *gd, object_t *parent_obj);
-void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
-void print_list_vert(gamedata_t *gd, object_t *parent_obj);
-void print_location(gamedata_t *gd, object_t *location);
-
 int dispatch_action(gamedata_t *gd, input_t *input);
 
 void quit_sub(gamedata_t *gd, input_t *input);
@@ -21,7 +14,7 @@ void inv_sub(gamedata_t *gd, input_t *input);
 void look_sub(gamedata_t *gd, input_t *input);
 void putin_sub(gamedata_t *gd, input_t *input);
 void examine_sub(gamedata_t *gd, input_t *input);
-
+void dumpobj_sub(gamedata_t *gd, input_t *input);
 
 /* ****************************************************************************
  * Utility methods
@@ -157,6 +150,9 @@ int dispatch_action(gamedata_t *gd, input_t *input) {
         case ACT_EXAMINE:
             examine_sub(gd, input);
             return 1;
+        case ACT_DUMPOBJ:
+            dumpobj_sub(gd, input);
+            return 1;
         default:
             printf("Unhandled action #%d (%s)\n",
                     input->action, input->words[0].word);
@@ -270,4 +266,8 @@ void examine_sub(gamedata_t *gd, input_t *input) {
     } else {
         printf("It looks as expected.\n");
     }
+}
+
+void dumpobj_sub(gamedata_t *gd, input_t *input) {
+    object_dump(gd, input->nouns[0]);
 }

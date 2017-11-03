@@ -28,6 +28,7 @@
 #define ACT_LOOK 5
 #define ACT_PUTIN 6
 #define ACT_EXAMINE 7
+#define ACT_DUMPOBJ 8
 
 #define GT_MAX_TOKENS 16
 
@@ -136,6 +137,7 @@ typedef struct GAMEDATA {
 int object_contains(object_t *container, object_t *content);
 int object_contains_indirect(object_t *container, object_t *content);
 object_t* object_create(object_t *parent);
+void object_dump(gamedata_t *gd, object_t *obj);
 void object_free(object_t *obj);
 void object_move(object_t *obj, object_t *new_parent);
 void object_property_add_array(object_t *obj, int pid, int size);
@@ -180,4 +182,13 @@ char* read_line();
 void style_bold();
 void style_normal();
 void style_reverse();
+
+
+void object_name_print(gamedata_t *gd, object_t *obj);
+void object_property_print(object_t *obj, int prop_num);
+void print_list_horz(gamedata_t *gd, object_t *parent_obj);
+void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
+void print_list_vert(gamedata_t *gd, object_t *parent_obj);
+void print_location(gamedata_t *gd, object_t *location);
+
 #endif // PARSE_H

@@ -41,6 +41,76 @@ object_t* object_create(object_t *parent) {
     return obj;
 }
 
+void object_dump(gamedata_t *gd, object_t *obj) {
+    if (!obj) return;
+
+    printf("Object \"");
+    object_name_print(gd, obj);
+    printf("\" at %p\n", (void*)obj);
+    printf("   PARENT: ");
+
+    if (obj->parent) {
+        putchar('"');
+        object_name_print(gd, obj->parent);
+        printf("\" at %p\n", (void*)obj->parent);
+    } else {
+        printf("(none)\n");
+    }
+
+    printf("   FIRST CHILD: ");
+    if (obj->first_child) {
+        putchar('"');
+        object_name_print(gd, obj->first_child);
+        printf("\" at %p\n", (void*)obj->first_child);
+    } else {
+        printf("(none)\n");
+    }
+
+    printf("   SIBLING: ");
+    if (obj->sibling) {
+        putchar('"');
+        object_name_print(gd, obj->sibling);
+        printf("\" at %p\n", (void*)obj->sibling);
+    } else {
+        printf("(none)\n");
+    }
+
+    if (!obj->properties) {
+        printf("   (no properties)\n");
+        return;
+    }
+
+    property_t *prop = obj->properties;
+    while (prop) {
+        printf("   %2d ", prop->id);
+        switch(prop->value.type) {
+            case PT_INTEGER:
+                printf("%d\n", prop->value.d.num);
+                break;
+            case PT_STRING:
+                printf("\"%s\"\n", (char*)prop->value.d.ptr);
+                break;
+            case PT_OBJECT:
+                putchar('"');
+                object_name_print(gd, (object_t*)prop->value.d.ptr);
+                printf("\" at %p\n", (void*)prop->value.d.ptr);
+                break;
+            case PT_ARRAY:
+                putchar('(');
+                for (int i = 0; i < prop->value.array_size; ++i) {
+                    value_t *cur = &((value_t*)prop->value.d.ptr)[i];
+                    printf(" %d", cur->d.num);
+                }
+                printf(" )\n");
+                break;
+            default:
+                printf("(unhandled type %d)\n", prop->value.type);
+                break;
+        }
+        prop = prop->next;
+    }
+}
+
 void object_free(object_t *obj) {
     property_t *cur = obj->properties;
     property_t *next = NULL;

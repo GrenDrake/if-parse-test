@@ -6,6 +6,7 @@
 (constant act-look 5)
 (constant act-put  6)
 (constant act-examine 7)
+(constant act-dumpobj 8)
 
 (object gameinfo -
     player player
@@ -23,3 +24,4 @@
 (action act-examine (<x> <examine>) noun)
 (action act-examine <look> <at> noun)
 (action act-examine <what> (<is> <are>) scope topics)
+(action act-dumpobj <dump> noun)
