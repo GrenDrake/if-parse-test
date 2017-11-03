@@ -137,17 +137,19 @@ int object_contains(object_t *container, object_t *content);
 int object_contains_indirect(object_t *container, object_t *content);
 object_t* object_create(object_t *parent);
 void object_free(object_t *obj);
-void object_free_property(property_t *prop);
 void object_move(object_t *obj, object_t *new_parent);
 void object_property_add_array(object_t *obj, int pid, int size);
 void object_property_add_core(object_t *obj, property_t *prop); /* non-public */
 void object_property_add_integer(object_t *obj, int pid, int value);
 void object_property_add_object(object_t *obj, int pid, object_t *value);
 void object_property_add_string(object_t *obj, int pid, const char *text);
+void object_property_delete(object_t *obj, int pid);
 property_t* object_property_get(object_t *obj, int pid);
 
 void objectloop_depth_first(object_t *root, void (*callback)(object_t *obj));
 void objectloop_free(object_t *obj);
+
+void property_free(property_t *prop);
 
 
 void vocab_dump();

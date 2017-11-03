@@ -46,17 +46,10 @@ void object_free(object_t *obj) {
     property_t *next = NULL;
     while (cur) {
         next = cur->next;
-        object_free_property(cur);
+        property_free(cur);
         cur = next;
     }
     free(obj);
-}
-
-void object_free_property(property_t *prop) {
-    if (prop->value.type == PT_ARRAY) {
-        free(prop->value.d.ptr);
-    }
-    free(prop);
 }
 
 void object_move(object_t *obj, object_t *new_parent) {
@@ -92,27 +85,7 @@ void object_property_add_array(object_t *obj, int pid, int size) {
 }
 
 void object_property_add_core(object_t *obj, property_t *prop) {
-    property_t *cur = obj->properties;
-    property_t *prev = NULL;
-
-    while (cur) {
-        if (cur == prop) return;
-        if (cur->id == prop->id) {
-            if (prev) {
-                prev->next = cur->next;
-            }
-            if (cur == obj->properties) {
-                obj->properties = cur->next;
-            }
-            property_t *tmp = cur->next;
-            object_free_property(cur);
-            cur = tmp;
-        } else {
-            prev = cur;
-            cur = cur->next;
-        }
-    }
-
+    object_property_delete(obj, prop->id);
     prop->next = obj->properties;
     obj->properties = prop;
 }
@@ -142,6 +115,28 @@ void object_property_add_string(object_t *obj, int pid, const char *text) {
     prop->value.d.ptr = (void*)text;
 
     object_property_add_core(obj, prop);
+}
+
+void object_property_delete(object_t *obj, int pid) {
+    property_t *iter = obj->properties;
+
+    if (!iter) return;
+
+    if (iter->id == pid) {
+        obj->properties = iter->next;
+        property_free(iter);
+        return;
+    }
+
+    while (iter->next && iter->next->id != pid) {
+        iter = iter->next;
+    }
+    if (!iter->next) {
+        return;
+    }
+    property_t *to_delete = iter->next;
+    iter->next = iter->next->next;
+    property_free(to_delete);
 }
 
 property_t* object_property_get(object_t *obj, int pid) {
@@ -178,3 +173,11 @@ void objectloop_free(object_t *obj) {
 
     object_free(obj);
 }
+
+void property_free(property_t *prop) {
+    if (prop->value.type == PT_ARRAY) {
+        free(prop->value.d.ptr);
+    }
+    free(prop);
+}
+
