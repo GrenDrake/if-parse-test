@@ -49,12 +49,11 @@ void add_to_scope(gamedata_t *gd, object_t *obj) {
 }
 
 void scope_within(gamedata_t *gd, object_t *ceiling) {
-    object_t *obj, *obj_list[16];
+    object_t *obj_list[16];
     int queue;
 
     queue = 1;
     obj_list[0] = ceiling->first_child;
-    obj = ceiling->first_child;
     while (queue > 0) {
         --queue;
         object_t *here = obj_list[queue];
@@ -375,7 +374,7 @@ int game_init(gamedata_t *gd) {
 
     property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "#intro"));
     if (intro_prop && intro_prop->value.d.ptr) {
-        printf("%s\n", intro_prop->value.d.ptr);
+        printf("%s\n", (char*)intro_prop->value.d.ptr);
     }
 
     return 1;

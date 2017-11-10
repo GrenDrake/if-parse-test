@@ -543,7 +543,7 @@ int fix_references(gamedata_t *gd) {
             if (p->value.type == PT_TMPNAME) {
                 object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
                 if (!obj) {
-                    printf("Undefined reference to %s.\n", p->value.d.ptr);
+                    printf("Undefined reference to %s.\n", (char*)p->value.d.ptr);
                     return 0;
                 }
                 object_property_add_object(curo, p->id, obj);

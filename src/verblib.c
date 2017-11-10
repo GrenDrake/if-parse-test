@@ -202,7 +202,7 @@ void move_sub(gamedata_t *gd, input_t *input) {
             object_move(gd->player, prop->value.d.ptr);
             print_location(gd, gd->player->parent);
         } else if (prop->value.type == PT_STRING) {
-            printf("%s", prop->value.d.ptr);
+            printf("%s", (char*)prop->value.d.ptr);
         }
     } else {
         printf("Can't go that way.\n");
@@ -257,7 +257,7 @@ void putin_sub(gamedata_t *gd, input_t *input) {
 void examine_sub(gamedata_t *gd, input_t *input) {
     property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#description"));
     if (p && p->value.type == PT_STRING) {
-        printf("%s\n", (void*)p->value.d.ptr);
+        printf("%s\n", (char*)p->value.d.ptr);
     } else {
         printf("It looks as expected.\n");
     }
