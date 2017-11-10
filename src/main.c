@@ -93,12 +93,21 @@ int tokenize(input_t *input) {
 
     for (int i = 0; input->input[i]; ++i) {
         unsigned char here = input->input[i];
+        char punct_char = 0;
 
-        if (isspace(here) || here == 0) {
+        if (ispunct(here) || isspace(here) || here == 0) {
+            if (ispunct(here)) {
+                punct_char = here;
+            }
             if (in_word) {
                 in_word = 0;
                 input->input[i] = 0;
                 input->words[count].word_no = vocab_index(input->words[count].word);
+                ++count;
+            }
+            if (punct_char) {
+                char buf[2] = { punct_char };
+                input->words[count].word_no = vocab_index(buf);
                 ++count;
             }
             if (here != 0) {
@@ -195,6 +204,7 @@ error code less than 0.
 */
 int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
     int then_word = vocab_index("then");
+    int period_word = vocab_index(".");
     int token_no = 0;
     object_t *obj;
     noun_t *noun;
@@ -203,7 +213,8 @@ int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
         if (action->grammar[token_no].type == GT_END) {
             if (input->cur_word == input->word_count) {
                 return action->action_code;
-            } else if (input->words[input->cur_word].word_no == then_word) {
+            } else if (input->words[input->cur_word].word_no == then_word
+                        || input->words[input->cur_word].word_no == period_word) {
                 ++input->cur_word;
                 return action->action_code;
             } else {
