@@ -129,7 +129,7 @@ int tokenize(input_t *input) {
 
 void free_noun_list(noun_t *noun) {
     if (noun == NULL) return;
-    
+
     free(noun->ambig);
     free(noun->also);
     free(noun);
@@ -140,7 +140,7 @@ void free_noun_list(noun_t *noun) {
  defined scope.
 
  Returns a noun object found if a single match is made, returns NULL if
- no match is made, and returns a linked list of noun objects if multiple 
+ no match is made, and returns a linked list of noun objects if multiple
  matches exist, but a decision between them could not be made.
  */
 noun_t* match_noun(gamedata_t *gd, input_t *input) {
@@ -194,14 +194,17 @@ Returns the action's action number if successful. On failure, returns an
 error code less than 0.
 */
 int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
+    int then_word = vocab_index("then");
     int token_no = 0;
-    input->cur_word = 0;
     object_t *obj;
     noun_t *noun;
 
     while (1) {
         if (action->grammar[token_no].type == GT_END) {
             if (input->cur_word == input->word_count) {
+                return action->action_code;
+            } else if (input->words[input->cur_word].word_no == then_word) {
+                ++input->cur_word;
                 return action->action_code;
             } else {
                 return PARSE_NONMATCH;
@@ -227,14 +230,6 @@ int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
                 noun = match_noun(gd, input);
                 if (!noun) {
                     return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
-                /*} else if (noun->ambig) {
-                    free_noun_list(noun);
-                    noun_t *cur = noun;
-                    while(cur) {
-                        object_name_print(gd, cur->object);
-                        cur = cur->ambig;
-                    }
-                    return PARSE_AMBIG;*/
                 } else {
                     input->nouns[input->noun_count] = noun;
                     ++input->noun_count;
@@ -277,22 +272,31 @@ int parse(gamedata_t *gd, input_t *input) {
     action_t *action_iter = gd->actions;
     input->noun_count = 0;
 
-    if (input->words[0].word_no == -1) {
-        printf("Unknown word '%s'.\n", input->words[0].word);
+    if (input->words[input->cur_word].word_no == -1) {
+        printf("Unknown word '%s'.\n", input->words[input->cur_word].word);
         input->action = PARSE_BADTOKEN;
         return 0;
     }
 
+    int best_result_end_word = 0;
     int best_result = PARSE_BADTOKEN;
     while (action_iter && best_result < 0) {
+        input->cur_word = input->next_cmd;
         int result = try_parse_action(gd, input, action_iter);
         if (best_result < result) {
             best_result = result;
+            best_result_end_word = input->cur_word;
         }
         if (result >= 0) {
             break;
         }
         action_iter = action_iter->next;
+    }
+    input->cur_word = best_result_end_word;
+    if (input->cur_word == input->word_count) {
+        input->next_cmd = 0;
+    } else {
+        input->next_cmd = input->cur_word;
     }
 
     for (int i = 0; i < PARSE_MAX_NOUNS; ++i) {
@@ -310,7 +314,6 @@ int parse(gamedata_t *gd, input_t *input) {
                 cur = cur->ambig;
             }
             printf(".\n");
-            free_noun_list(input->nouns[i]);
             best_result = PARSE_AMBIG;
         }
     }
@@ -324,7 +327,7 @@ int parse(gamedata_t *gd, input_t *input) {
             printf("Not visible.\n");
             break;
         case PARSE_NONMATCH:
-            printf("Unrecognized verb '%s'.\n", input->words[0].word);
+            printf("Unrecognized verb '%s'.\n", input->words[input->next_cmd].word);
             break;
         case PARSE_BADTOKEN:
             printf("Parser error.\n");
@@ -367,33 +370,51 @@ int game_init(gamedata_t *gd) {
     return 1;
 }
 
-
+void input_free(input_t *input) {
+    for (int i = 0; i < PARSE_MAX_NOUNS; ++i) {
+        free_noun_list(input->nouns[i]);
+    }
+    free(input->input);
+    free(input);
+}
 
 int main() {
+    vocab_raw_add("then");
+    vocab_raw_add(".");
+    vocab_raw_add(",");
+    vocab_raw_add(":");
+    vocab_raw_add(";");
     gamedata_t *gd = load_data();
     if (!gd) return 1;
     if (!game_init(gd)) return 1;
 
+    input_t *input;
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
-        printf("\n> ");
-        input_t input = {0};
-        input.input = read_line();
+        if (input == NULL) {
+            input = calloc(sizeof(input_t), 1);
+            printf("\n> ");
+            input->input = read_line();
 
-        if (!tokenize(&input)) {
-            printf("Pardon?\n");
-            free(input.input);
+            if (!tokenize(input)) {
+                printf("Pardon?\n");
+                input_free(input);
+                input = NULL;
+                continue;
+            }
+        }
+        if (!parse(gd, input)) {
+            input_free(input);
+            input = NULL;
             continue;
         }
 
-        if (!parse(gd, &input)) {
-            free(input.input);
-            continue;
+        dispatch_action(gd, input);
+        if (!input->next_cmd) {
+            input_free(input);
+            input = NULL;
         }
-
-        dispatch_action(gd, &input);
-        free(input.input);
-    }
+}
 
     printf("Goodbye!\n\n");
     free_data(gd);

@@ -117,6 +117,7 @@ typedef struct CMD_TOKEN {
 
 typedef struct COMMAND_INPUT {
     char *input;
+    int next_cmd;
 
     unsigned word_count, cur_word;
     cmd_token_t words[MAX_INPUT_WORDS];
