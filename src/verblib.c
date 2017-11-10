@@ -169,35 +169,35 @@ void quit_sub(gamedata_t *gd, input_t *input) {
 }
 
 void take_sub(gamedata_t *gd, input_t *input) {
-    if (input->nouns[0] == gd->player) {
+    if (input->nouns[0]->object == gd->player) {
         printf("Cannot take yourself.\n");
-    } else if (object_contains(gd->player, input->nouns[0])) {
+    } else if (object_contains(gd->player, input->nouns[0]->object)) {
         printf("Already taken.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[0], property_number(gd, "#is-takable"));
+        property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#is-takable"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("Impossible.\n");
         } else {
-            object_move(input->nouns[0], gd->player);
+            object_move(input->nouns[0]->object, gd->player);
             printf("Taken.\n");
         }
     }
 }
 
 void drop_sub(gamedata_t *gd, input_t *input) {
-    if (input->nouns[0] == gd->player) {
+    if (input->nouns[0]->object == gd->player) {
         printf("Cannot drop yourself.\n");
-    } else if (!object_contains(gd->player, input->nouns[0])) {
+    } else if (!object_contains(gd->player, input->nouns[0]->object)) {
         printf("Not carried.\n");
     } else {
-        object_move(input->nouns[0], gd->player->parent);
+        object_move(input->nouns[0]->object, gd->player->parent);
         printf("Dropped.\n");
     }
 }
 
 
 void move_sub(gamedata_t *gd, input_t *input) {
-    property_t *p = object_property_get(input->nouns[0], property_number(gd, "#dir-prop"));
+    property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#dir-prop"));
     if (!p || p->value.type != PT_STRING) {
         printf("Malformed direction.\n");
         return;
@@ -237,30 +237,30 @@ void look_sub(gamedata_t *gd, input_t *input) {
 }
 
 void putin_sub(gamedata_t *gd, input_t *input) {
-    if (input->nouns[0] == gd->player || input->nouns[1] == gd->player) {
+    if (input->nouns[0]->object == gd->player || input->nouns[1]->object == gd->player) {
         printf("Cannot put yourself somewhere.\n");
-    } else if (object_contains(input->nouns[1], input->nouns[0])) {
+    } else if (object_contains(input->nouns[1]->object, input->nouns[0]->object)) {
         printf("Already there.\n");
-    } else if (object_contains(input->nouns[0], input->nouns[1])) {
+    } else if (object_contains(input->nouns[0]->object, input->nouns[1]->object)) {
         printf("Not possible.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[1], property_number(gd, "#is-container"));
+        property_t *p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-container"));
         if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
             printf("That can't contain things.\n");
             return;
         }
-        p = object_property_get(input->nouns[1], property_number(gd, "#is-open"));
+        p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-open"));
         if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
             printf("It's not open.\n");
             return;
         }
-        object_move(input->nouns[0], input->nouns[1]);
+        object_move(input->nouns[0]->object, input->nouns[1]->object);
         printf("Done.\n");
     }
 }
 
 void examine_sub(gamedata_t *gd, input_t *input) {
-    property_t *p = object_property_get(input->nouns[0], property_number(gd, "#description"));
+    property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#description"));
     if (p && p->value.type == PT_STRING) {
         printf("%s\n", (void*)p->value.d.ptr);
     } else {
@@ -269,5 +269,5 @@ void examine_sub(gamedata_t *gd, input_t *input) {
 }
 
 void dumpobj_sub(gamedata_t *gd, input_t *input) {
-    object_dump(gd, input->nouns[0]);
+    object_dump(gd, input->nouns[0]->object);
 }

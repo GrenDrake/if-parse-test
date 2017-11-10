@@ -69,9 +69,15 @@
     name "clear umbrella"
     vocab ( <clear> <umbrella> )
 )
+
 (object - player
     name "black umbrella"
     vocab ( <black> <umbrella> )
+)
+
+(object - player
+    name "orange umbrella"
+    vocab ( <orange> <umbrella> )
 )
 (object - player
     name "glass box"

@@ -104,6 +104,12 @@ typedef struct OBJECT {
     struct OBJECT *sibling;
 } object_t;
 
+typedef struct NOUN {
+    object_t *object;
+    struct NOUN *ambig;
+    struct NOUN *also;
+} noun_t;
+
 typedef struct CMD_TOKEN {
     int word_no;
     const char *word;
@@ -117,7 +123,7 @@ typedef struct COMMAND_INPUT {
 
     int action;
     unsigned noun_count;
-    object_t *nouns[PARSE_MAX_NOUNS];
+    noun_t *nouns[PARSE_MAX_NOUNS];
 } input_t;
 
 typedef struct GAMEDATA {

@@ -127,17 +127,25 @@ int tokenize(input_t *input) {
  * Parsing tokenized input
  * ************************************************************************ */
 
+void free_noun_list(noun_t *noun) {
+    if (noun == NULL) return;
+    
+    free(noun->ambig);
+    free(noun->also);
+    free(noun);
+}
+
  /**
  Try and match part of the player's input to a noun in the currently
  defined scope.
 
- Returns the object found if a single match is made, returns NULL if
- no match is made, and returns OBJ_AMBIG if multiple matches exist, but
- a decision between them could not be made.
+ Returns a noun object found if a single match is made, returns NULL if
+ no match is made, and returns a linked list of noun objects if multiple 
+ matches exist, but a decision between them could not be made.
  */
-object_t* match_noun(gamedata_t *gd, input_t *input) {
-    object_t *match = NULL;
+noun_t* match_noun(gamedata_t *gd, input_t *input) {
     int match_strength = 0;
+    noun_t *match = NULL;
     int prop_vocab = property_number(gd, "#vocab");
 
     printf("finding noun...\n");
@@ -153,13 +161,23 @@ object_t* match_noun(gamedata_t *gd, input_t *input) {
             ++cur_word;
         }
         printf(" [%d]", words);
+        noun_t *new_match = NULL;
         if (words > match_strength) {
             printf("   (match)\n");
-            match = gd->search[i];
+            new_match = calloc(sizeof(noun_t), 1);
+            new_match->object = gd->search[i];
             match_strength = words;
+            if (match != NULL) {
+                free_noun_list(match);
+            }
+            match = new_match;
         } else if (words == match_strength && words > 0) {
-            printf("   (too many!)\n");
-            match = OBJ_AMBIG;
+            printf("   (ambig)\n");
+            new_match = calloc(sizeof(noun_t), 1);
+            new_match->object = gd->search[i];
+            match_strength = words;
+            new_match->ambig = match->ambig;
+            match->ambig = new_match;
         } else {
             printf("\n");
         }
@@ -179,6 +197,7 @@ int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
     int token_no = 0;
     input->cur_word = 0;
     object_t *obj;
+    noun_t *noun;
 
     while (1) {
         if (action->grammar[token_no].type == GT_END) {
@@ -196,30 +215,28 @@ int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
             case GT_END:
                 printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
-            case GT_NOUN:
-                obj = scope_ceiling(gd, gd->player);
-                add_to_scope(gd, obj);
-                scope_within(gd, obj);
-                obj = match_noun(gd, input);
-                if (!obj) {
-                    return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
-                } else if (obj == OBJ_AMBIG) {
-                    return PARSE_AMBIG;
-                } else {
-                    input->nouns[input->noun_count] = obj;
-                    ++input->noun_count;
-                }
-                ++token_no;
-                break;
             case GT_SCOPE:
-                scope_within(gd, (object_t*)action->grammar[token_no].ptr);
-                obj = match_noun(gd, input);
-                if (!obj) {
-                    return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
-                } else if (obj == OBJ_AMBIG) {
-                    return PARSE_AMBIG;
+            case GT_NOUN:
+                if (action->grammar[token_no].type == GT_SCOPE) {
+                    scope_within(gd, (object_t*)action->grammar[token_no].ptr);
                 } else {
-                    input->nouns[input->noun_count] = obj;
+                    obj = scope_ceiling(gd, gd->player);
+                    add_to_scope(gd, obj);
+                    scope_within(gd, obj);
+                }
+                noun = match_noun(gd, input);
+                if (!noun) {
+                    return token_no ? PARSE_BADNOUN : PARSE_NONMATCH;
+                /*} else if (noun->ambig) {
+                    free_noun_list(noun);
+                    noun_t *cur = noun;
+                    while(cur) {
+                        object_name_print(gd, cur->object);
+                        cur = cur->ambig;
+                    }
+                    return PARSE_AMBIG;*/
+                } else {
+                    input->nouns[input->noun_count] = noun;
                     ++input->noun_count;
                 }
                 ++token_no;
@@ -278,10 +295,30 @@ int parse(gamedata_t *gd, input_t *input) {
         action_iter = action_iter->next;
     }
 
+    for (int i = 0; i < PARSE_MAX_NOUNS; ++i) {
+        if (input->nouns[i] && input->nouns[i]->ambig) {
+            printf("You'll need to be more specific whether you mean ");
+            noun_t *cur = input->nouns[i];
+            while (cur) {
+                if (cur != input->nouns[i]) {
+                    printf(", ");
+                    if (cur->ambig == NULL) {
+                        printf("or ");
+                    }
+                }
+                object_name_print(gd, cur->object);
+                cur = cur->ambig;
+            }
+            printf(".\n");
+            free_noun_list(input->nouns[i]);
+            best_result = PARSE_AMBIG;
+        }
+    }
+
     input->action = -1;
     switch(best_result) {
         case PARSE_AMBIG:
-            printf("Multiple items matched.\n");
+//            printf("Multiple items matched.\n");
             break;
         case PARSE_BADNOUN:
             printf("Not visible.\n");
