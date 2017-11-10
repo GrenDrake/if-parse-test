@@ -399,7 +399,7 @@ int main() {
     if (!gd) return 1;
     if (!game_init(gd)) return 1;
 
-    input_t *input;
+    input_t *input = NULL;
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
         if (input == NULL) {
