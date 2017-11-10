@@ -223,6 +223,23 @@ property_t* object_property_get(object_t *obj, int pid) {
     return NULL;
 }
 
+int object_property_is_true(object_t *obj, int pid, int default_value) {
+    property_t *prop = object_property_get(obj, pid);
+    if (!prop) return default_value;
+    switch(prop->value.type) {
+        case PT_INTEGER:
+            return prop->value.d.num != 0;
+        case PT_OBJECT:
+        case PT_STRING:
+            return prop->value.d.ptr != NULL;
+        case PT_ARRAY:
+            return 1;
+        default:
+            printf("[ERROR: unknown property type %d in object_property_is_true.]\n", prop->value.type);
+            return 0;
+    }
+}
+
 void objectloop_depth_first(object_t *root, void (*callback)(object_t *obj)) {
     object_t *cur = root->first_child;
     while (cur) {

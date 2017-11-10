@@ -23,13 +23,7 @@ void object_name_print(gamedata_t *gd, object_t *obj) {
     int prop_isproper = property_number(gd, "#is-proper");
     int prop_name = property_number(gd, "#name");
 
-    int is_proper = 0;
-    property_t *proper = object_property_get(obj, prop_isproper);
-    if (proper && proper->value.type == PT_INTEGER && proper->value.d.num == 1) {
-        is_proper = 1;
-    }
-
-    if (!is_proper) {
+    if (!object_property_is_true(obj, prop_isproper, 0)) {
         int prop_article = property_number(gd, "#article");
         property_t *article = object_property_get(obj, prop_article);
         if (article) {
@@ -174,8 +168,7 @@ void take_sub(gamedata_t *gd, input_t *input) {
     } else if (object_contains(gd->player, input->nouns[0]->object)) {
         printf("Already taken.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#is-takable"));
-        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
+        if (!object_property_is_true(input->nouns[0]->object, property_number(gd, "#is-takable"), 1)) {
             printf("Impossible.\n");
         } else {
             object_move(input->nouns[0]->object, gd->player);
@@ -244,13 +237,15 @@ void putin_sub(gamedata_t *gd, input_t *input) {
     } else if (object_contains(input->nouns[0]->object, input->nouns[1]->object)) {
         printf("Not possible.\n");
     } else {
-        property_t *p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-container"));
-        if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
+//        property_t *p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-container"));
+//        if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
+        if (!object_property_is_true(input->nouns[1]->object, property_number(gd, "#is-container"), 0)) {
             printf("That can't contain things.\n");
             return;
         }
-        p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-open"));
-        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
+//        p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-open"));
+//        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
+        if (!object_property_is_true(input->nouns[1]->object, property_number(gd, "#is-open"), 1)) {
             printf("It's not open.\n");
             return;
         }

@@ -154,6 +154,7 @@ void object_property_add_object(object_t *obj, int pid, object_t *value);
 void object_property_add_string(object_t *obj, int pid, const char *text);
 void object_property_delete(object_t *obj, int pid);
 property_t* object_property_get(object_t *obj, int pid);
+int object_property_is_true(object_t *obj, int pid, int default_value);
 
 void objectloop_depth_first(object_t *root, void (*callback)(object_t *obj));
 void objectloop_free(object_t *obj);
