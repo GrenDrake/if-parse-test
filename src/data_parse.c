@@ -412,6 +412,31 @@ int parse_object(gamedata_t *gd, list_t *list) {
  * ****************************************************************************/
 token_t *master_token_list = NULL;
 
+gamedata_t* load_data() {
+    if (!tokenize_file("game.dat") || !tokenize_file("game2.dat")) {
+        return NULL;
+    }
+    gamedata_t *gd = parse_tokens();
+    if (!gd) {
+        debug_out("Error loading game data.\n");
+        return NULL;
+    }
+    return gd;
+}
+
+void free_data(gamedata_t *gd) {
+    objectloop_free(gd->root);
+
+    while (gd->actions) {
+        action_t *next = gd->actions->next;
+        free(gd->actions);
+        gd->actions = next;
+    }
+
+    symboltable_free(gd->symbols);
+    free(gd);
+}
+
 int tokenize_file(const char *filename) {
     debug_out("Tokenizing source file %s...\n", filename);
     FILE *fp = fopen(filename, "rt");

@@ -4,7 +4,6 @@
 
 #include "parse.h"
 
-static void symboltable_free(symboltable_t *table);
 static void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
 
 gamedata_t *gamedata_create() {
@@ -22,31 +21,6 @@ unsigned hash_string(const char *text) {
         hash *= 16777619;
     }
     return hash;
-}
-
-gamedata_t* load_data() {
-    if (!tokenize_file("game.dat") || !tokenize_file("game2.dat")) {
-        return NULL;
-    }
-    gamedata_t *gd = parse_tokens();
-    if (!gd) {
-        printf("Error loading game data.\n");
-        return NULL;
-    }
-    return gd;
-}
-
-void free_data(gamedata_t *gd) {
-    objectloop_free(gd->root);
-
-    while (gd->actions) {
-        action_t *next = gd->actions->next;
-        free(gd->actions);
-        gd->actions = next;
-    }
-
-    symboltable_free(gd->symbols);
-    free(gd);
 }
 
 void symboltable_free(symboltable_t *table) {
