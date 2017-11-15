@@ -7,6 +7,7 @@ const char *symbol_types[] = {
     "object",
     "property",
     "constant",
+    "function",
 };
 
 
@@ -92,6 +93,20 @@ void list_add(list_t *list, list_t *item) {
 list_t *list_create() {
     list_t *list = calloc(sizeof(list_t), 1);
     list->type = T_LIST;
+    return list;
+}
+
+list_t *list_create_false() {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_INTEGER;
+    list->number = 0;
+    return list;
+}
+
+list_t *list_create_true() {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_INTEGER;
+    list->number = 1;
     return list;
 }
 

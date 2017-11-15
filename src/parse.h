@@ -179,6 +179,8 @@ void token_free(token_t *token);
 
 void list_add(list_t *list, list_t *item);
 list_t *list_create();
+list_t *list_create_false();
+list_t *list_create_true();
 list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
 int list_size(list_t *list);
