@@ -95,6 +95,36 @@ list_t *list_create() {
     return list;
 }
 
+list_t *list_duplicate(list_t *old_list) {
+    if (!old_list) return NULL;
+
+    list_t *iter = NULL;
+    list_t *new_list = list_create();
+    new_list->type = old_list->type;
+    switch(old_list->type) {
+        case T_LIST:
+            iter = old_list->child;
+            while (iter) {
+                list_add(new_list, list_duplicate(iter));
+                iter = iter->next;
+            }
+            break;
+        case T_STRING:
+        case T_ATOM:
+            new_list->text = str_dupl(old_list->text);
+            break;
+        case T_VOCAB:
+        case T_INTEGER:
+            new_list->number = old_list->number;
+            break;
+        default:
+            debug_out("list_duplicate: unknown list type %d.\n", old_list->type);
+            list_free(new_list);
+            return NULL;
+    }
+    return new_list;
+}
+
 void list_free(list_t *list) {
     if (list->type == T_LIST) {
         list_t *sublist = list->child;
