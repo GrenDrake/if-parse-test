@@ -127,7 +127,7 @@ token_t *tokenize(char *file) {
             t->text = str_dupl(token);
             token_add(&tokens, &last_ptr, t);
         } else {
-            printf("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
+            text_out("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
             ++pos;
         }
     }
@@ -153,13 +153,13 @@ int parse_action(gamedata_t *gd, list_t *list) {
         act->action_code = 0;
         act->action_name = cur->text;
     } else {
-        printf("Action number must be integer or atom.\n");
+        text_out("Action number must be integer or atom.\n");
         return 0;
     }
 
     cur = cur->next;
     if (!cur) {
-        printf("Action has no grammar.\n");
+        text_out("Action has no grammar.\n");
         return 0;
     }
 
@@ -183,13 +183,13 @@ int parse_action(gamedata_t *gd, list_t *list) {
                     act->grammar[pos].type = GT_SCOPE;
                     cur = cur->next;
                     if (!cur || cur->type != T_ATOM) {
-                        printf("scope grammar token must be followed by object name.\n");
+                        text_out("scope grammar token must be followed by object name.\n");
                         return 0;
                     }
                     act->grammar[pos].ptr = str_dupl(cur->text);
                     ++pos;
                 } else {
-                    printf("Unrecognized grammar token '%s'.\n", cur->text);
+                    text_out("Unrecognized grammar token '%s'.\n", cur->text);
                     return 0;
                 }
                 break;
@@ -206,7 +206,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
                             ++pos;
                             break;
                         default:
-                            printf("Only vocab values permitted in action sub-statement. (%d)\n", sub->type);
+                            text_out("Only vocab values permitted in action sub-statement. (%d)\n", sub->type);
                             return 0;
                     }
                     sub = sub->next;
@@ -214,10 +214,10 @@ int parse_action(gamedata_t *gd, list_t *list) {
                 break;
             case T_STRING:
             case T_INTEGER:
-                printf("Integer and string values not permitted in action statement.\n");
+                text_out("Integer and string values not permitted in action statement.\n");
                 return 0;
             default:
-                printf("Bad token type %d in action definition.\n", cur->type);
+                text_out("Bad token type %d in action definition.\n", cur->type);
         }
         cur = cur->next;
     }
@@ -234,17 +234,17 @@ int parse_constant(gamedata_t *gd, list_t *list) {
 
     list_t *cur = list->child->next;
     if (cur->type != T_ATOM) {
-        printf("Constant name must be atom.\n");
+        text_out("Constant name must be atom.\n");
         return 0;
     }
     char *name = cur->text;
     cur = cur->next;
     if (!cur) {
-        printf("Constant has no value.\n");
+        text_out("Constant has no value.\n");
         return 0;
     }
     if (cur->next) {
-        printf("Constant may have only one value.\n");
+        text_out("Constant may have only one value.\n");
         return 0;
     }
     switch(cur->type) {
@@ -252,7 +252,7 @@ int parse_constant(gamedata_t *gd, list_t *list) {
             symbol_add_value(gd, name, SYM_CONSTANT, cur->number);
             break;
         default:
-            printf("Constant has unsopported value tyoe.\n");
+            text_out("Constant has unsopported value tyoe.\n");
     }
 
     return 1;
@@ -262,7 +262,7 @@ list_t* parse_list(token_t **place) {
     token_t *cur = *place;
 
     if (cur->type != T_OPEN) {
-        printf("Expected '('\n");
+        text_out("Expected '('\n");
         return NULL;
     }
     cur = cur->next;
@@ -299,7 +299,7 @@ list_t* parse_list(token_t **place) {
 
     }
     if (cur == NULL) {
-        printf("Unexpected end of tokens\n");
+        text_out("Unexpected end of tokens\n");
         *place = cur;
         return NULL;
     }
@@ -322,7 +322,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
     list_t *prop = list->child->next;
     list_t *val  = prop->next;
     if (prop->type != T_ATOM || val->type != T_ATOM) {
-        printf("Object name and parent must be atom.\n");
+        text_out("Object name and parent must be atom.\n");
         return 0;
     }
     if (strcmp(prop->text, "-") != 0) {
@@ -338,11 +338,11 @@ int parse_object(gamedata_t *gd, list_t *list) {
     char full_prop_name[MAX_PROPERTY_NAME] = { '#' };
     while (prop) {
         if (val == NULL) {
-            printf("Found property without value.\n");
+            text_out("Found property without value.\n");
             return 0;
         }
         if (prop->type != T_ATOM) {
-            printf("Property name must be atom.\n");
+            text_out("Property name must be atom.\n");
             return 0;
         }
 
@@ -383,16 +383,16 @@ int parse_object(gamedata_t *gd, list_t *list) {
                         arr[counter].d.ptr = str_dupl(cur->text);
                         break;
                     case T_LIST:
-                        printf("Nested lists are not permitted in object properties.\n");
+                        text_out("Nested lists are not permitted in object properties.\n");
                         break;
                     default:
-                        printf("WARNING: unhandled array value type %d.\n", cur->type);
+                        text_out("WARNING: unhandled array value type %d.\n", cur->type);
                 }
                 ++counter;
                 cur = cur->next;
             }
         } else {
-            printf("WARNING: unhandled property type %d.\n", val->type);
+            text_out("WARNING: unhandled property type %d.\n", val->type);
         }
 
         prop = val->next;
@@ -413,10 +413,10 @@ int parse_object(gamedata_t *gd, list_t *list) {
 token_t *master_token_list = NULL;
 
 int tokenize_file(const char *filename) {
-    printf("Tokenizing source file %s...\n", filename);
+    debug_out("Tokenizing source file %s...\n", filename);
     FILE *fp = fopen(filename, "rt");
     if (!fp) {
-        fprintf(stderr, "FATAL: Could not open file '%s'\n", filename);
+        debug_out("FATAL: Could not open file '%s'\n", filename);
         return 0;
     }
     fseek(fp, 0, SEEK_END);
@@ -447,7 +447,7 @@ int tokenize_file(const char *filename) {
 gamedata_t* parse_tokens() {
     vocab_build();
 
-    printf("Building lists...\n");
+    text_out("Building lists...\n");
     list_t *lists = NULL, *last_list = NULL;
     token_t *list_pos = master_token_list;
     while (list_pos) {
@@ -464,20 +464,20 @@ gamedata_t* parse_tokens() {
         }
     }
 
-    printf("Parsing lists...\n");
+    text_out("Parsing lists...\n");
     gamedata_t *gd = gamedata_create();
     list_t *clist = lists;
     while (clist) {
         if (clist->type != T_LIST) {
-            printf("Expected list at top level.\n");
+            text_out("Expected list at top level.\n");
             return NULL;
         }
         if (clist->child == NULL) {
-            printf("Empty list found at tope level.\n");
+            text_out("Empty list found at tope level.\n");
             return NULL;
         }
         if (clist->child->type != T_ATOM) {
-            printf("Top-level list must start with atom.\n");
+            text_out("Top-level list must start with atom.\n");
             return NULL;
         }
 
@@ -494,19 +494,19 @@ gamedata_t* parse_tokens() {
                 return NULL;
             }
         } else {
-            printf("Unknown top level construct %s.\n", clist->child->text);
+            text_out("Unknown top level construct %s.\n", clist->child->text);
             return NULL;
         }
 
         clist = clist->next;
     }
 
-    printf("Setting object references...\n");
+    text_out("Setting object references...\n");
     if (!fix_references(gd)) {
         return NULL;
     }
 
-    printf("Data loaded. Freeing temporary memory...\n\n");
+    text_out("Data loaded. Freeing temporary memory...\n\n");
     token_t *next, *here = master_token_list;
     while (here) {
         next = here->next;
@@ -530,7 +530,7 @@ int fix_references(gamedata_t *gd) {
         if (curo->parent_name) {
             object_t *parent = object_get_by_ident(gd, curo->parent_name);
             if (!parent) {
-                printf("Unknown object name %s.\n", curo->parent_name);
+                text_out("Unknown object name %s.\n", curo->parent_name);
                 return 0;
             }
             object_move(curo, parent);
@@ -543,7 +543,7 @@ int fix_references(gamedata_t *gd) {
             if (p->value.type == PT_TMPNAME) {
                 object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
                 if (!obj) {
-                    printf("Undefined reference to %s.\n", (char*)p->value.d.ptr);
+                    text_out("Undefined reference to %s.\n", (char*)p->value.d.ptr);
                     return 0;
                 }
                 object_property_add_object(curo, p->id, obj);
@@ -559,7 +559,7 @@ int fix_references(gamedata_t *gd) {
         if (cura->action_name) {
             symbol_t *symbol = symbol_get(gd, SYM_CONSTANT, cura->action_name);
             if (!symbol) {
-                printf("Action code contains unknown symbol %s.\n", cura->action_name);
+                text_out("Action code contains unknown symbol %s.\n", cura->action_name);
             }
             cura->action_code = symbol->d.value;
             cura->action_name = NULL;
@@ -569,7 +569,7 @@ int fix_references(gamedata_t *gd) {
                 char *name = cura->grammar[i].ptr;
                 cura->grammar[i].ptr = object_get_by_ident(gd, name);
                 if (!cura->grammar[i].ptr) {
-                    printf("Action scope contains unknown object %s.\n", name);
+                    text_out("Action scope contains unknown object %s.\n", name);
                     return 0;
                 }
                 free(name);

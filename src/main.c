@@ -156,9 +156,9 @@ noun_t* match_noun(gamedata_t *gd, input_t *input) {
     noun_t *match = NULL;
     int prop_vocab = property_number(gd, "#vocab");
 
-    printf("finding noun...\n");
+    text_out("finding noun...\n");
     for (int i = 0; i < gd->search_count; ++i) {
-        printf("   OBJECT ");
+        text_out("   OBJECT ");
         object_property_print(gd->search[i], property_number(gd, "#name"));
 
         int words = 0;
@@ -168,10 +168,10 @@ noun_t* match_noun(gamedata_t *gd, input_t *input) {
             ++words;
             ++cur_word;
         }
-        printf(" [%d]", words);
+        text_out(" [%d]", words);
         noun_t *new_match = NULL;
         if (words > match_strength) {
-            printf("   (match)\n");
+            text_out("   (match)\n");
             new_match = calloc(sizeof(noun_t), 1);
             new_match->object = gd->search[i];
             match_strength = words;
@@ -180,14 +180,14 @@ noun_t* match_noun(gamedata_t *gd, input_t *input) {
             }
             match = new_match;
         } else if (words == match_strength && words > 0) {
-            printf("   (ambig)\n");
+            text_out("   (ambig)\n");
             new_match = calloc(sizeof(noun_t), 1);
             new_match->object = gd->search[i];
             match_strength = words;
             new_match->ambig = match->ambig;
             match->ambig = new_match;
         } else {
-            printf("\n");
+            text_out("\n");
         }
     }
 
@@ -226,7 +226,7 @@ int try_parse_action(gamedata_t *gd, input_t *input, action_t *action) {
         gd->search_count = 0;
         switch(action->grammar[token_no].type) {
             case GT_END:
-                printf("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
+            text_out("PARSE ERROR: Encountered GT_END in grammar; this should have already been handled.\n");
                 break;
             case GT_SCOPE:
             case GT_NOUN:
@@ -283,7 +283,7 @@ int parse(gamedata_t *gd, input_t *input) {
     input->noun_count = 0;
 
     if (input->words[input->cur_word].word_no == -1) {
-        printf("Unknown word '%s'.\n", input->words[input->cur_word].word);
+        text_out("Unknown word '%s'.\n", input->words[input->cur_word].word);
         input->action = PARSE_BADTOKEN;
         return 0;
     }
@@ -311,19 +311,19 @@ int parse(gamedata_t *gd, input_t *input) {
 
     for (int i = 0; i < PARSE_MAX_NOUNS; ++i) {
         if (input->nouns[i] && input->nouns[i]->ambig) {
-            printf("You'll need to be more specific whether you mean ");
+            text_out("You'll need to be more specific whether you mean ");
             noun_t *cur = input->nouns[i];
             while (cur) {
                 if (cur != input->nouns[i]) {
-                    printf(", ");
+                    text_out(", ");
                     if (cur->ambig == NULL) {
-                        printf("or ");
+                        text_out("or ");
                     }
                 }
                 object_name_print(gd, cur->object);
                 cur = cur->ambig;
             }
-            printf(".\n");
+            text_out(".\n");
             best_result = PARSE_AMBIG;
         }
     }
@@ -334,13 +334,13 @@ int parse(gamedata_t *gd, input_t *input) {
 //            printf("Multiple items matched.\n");
             break;
         case PARSE_BADNOUN:
-            printf("Not visible.\n");
+            text_out("Not visible.\n");
             break;
         case PARSE_NONMATCH:
-            printf("Unrecognized verb '%s'.\n", input->words[input->next_cmd].word);
+            text_out("Unrecognized verb '%s'.\n", input->words[input->next_cmd].word);
             break;
         case PARSE_BADTOKEN:
-            printf("Parser error.\n");
+            text_out("Parser error.\n");
             break;
         default:
             input->action = best_result;
@@ -356,25 +356,25 @@ int parse(gamedata_t *gd, input_t *input) {
 int game_init(gamedata_t *gd) {
     gd->gameinfo = object_get_by_ident(gd, "gameinfo");
     if (!gd->gameinfo) {
-        printf("FATAL: no gameinfo object\n");
+        text_out("FATAL: no gameinfo object\n");
         free_data(gd);
         return 0;
     }
 
     property_t *player_prop = object_property_get(gd->gameinfo, property_number(gd, "#player"));
     if (!player_prop || !player_prop->value.d.ptr) {
-        printf("FATAL: gameinfo does not define valid initial player object\n");
+        text_out("FATAL: gameinfo does not define valid initial player object\n");
         free_data(gd);
         return 0;
     }
     gd->player = player_prop->value.d.ptr;
 
-    printf("if-parse-test VERSION %d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
-    printf("--------------------------------------------------------------------------------\n\n");
+    text_out("if-parse-test VERSION %d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
+    text_out("--------------------------------------------------------------------------------\n\n");
 
     property_t *intro_prop = object_property_get(gd->gameinfo, property_number(gd, "#intro"));
     if (intro_prop && intro_prop->value.d.ptr) {
-        printf("%s\n", (char*)intro_prop->value.d.ptr);
+        text_out("%s\n", (char*)intro_prop->value.d.ptr);
     }
 
     return 1;
@@ -403,11 +403,11 @@ int main() {
     while (!gd->quit_game) {
         if (input == NULL) {
             input = calloc(sizeof(input_t), 1);
-            printf("\n> ");
+            text_out("\n> ");
             input->input = read_line();
 
             if (!tokenize(input)) {
-                printf("Pardon?\n");
+                text_out("Pardon?\n");
                 input_free(input);
                 input = NULL;
                 continue;
@@ -424,9 +424,9 @@ int main() {
             input_free(input);
             input = NULL;
         }
-}
+    }
 
-    printf("Goodbye!\n\n");
+    text_out("Goodbye!\n\n");
     free_data(gd);
     return 0;
 }

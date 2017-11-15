@@ -27,7 +27,7 @@ void object_name_print(gamedata_t *gd, object_t *obj) {
         int prop_article = property_number(gd, "#article");
         property_t *article = object_property_get(obj, prop_article);
         if (article) {
-            printf("%s", (char*)article->value.d.ptr);
+            text_out("%s", (char*)article->value.d.ptr);
             putchar(' ');
         } else {
             property_t *name = object_property_get(obj, prop_name);
@@ -37,9 +37,9 @@ void object_name_print(gamedata_t *gd, object_t *obj) {
             }
 
             if (first_letter == 'a' || first_letter == 'u' || first_letter == 'i' || first_letter == 'e' || first_letter == 'o') {
-                printf("an ");
+                text_out("an ");
             } else {
-                printf("a ");
+                text_out("a ");
             }
         }
     }
@@ -49,9 +49,9 @@ void object_name_print(gamedata_t *gd, object_t *obj) {
 void object_property_print(object_t *obj, int prop_num) {
     property_t *prop = object_property_get(obj, prop_num);
     if (prop) {
-        printf("%s", (char*)prop->value.d.ptr);
+        text_out("%s", (char*)prop->value.d.ptr);
     } else {
-        printf("(obj#%d)", obj->id);
+        text_out("(obj#%d)", obj->id);
     }
 }
 
@@ -59,17 +59,17 @@ void print_list_horz(gamedata_t *gd, object_t *parent_obj) {
     object_t *obj = parent_obj->first_child;
     while (obj) {
         if (obj != parent_obj->first_child) {
-            printf(", ");
+            text_out(", ");
             if (!obj->sibling) {
-                printf("and ");
+                text_out("and ");
             }
         }
         object_name_print(gd, obj);
 
         if (obj->first_child) {
-            printf(" (containing ");
+            text_out(" (containing ");
             print_list_horz(gd, obj);
-            printf(")");
+            text_out(")");
         }
 
         obj = obj->sibling;
@@ -80,10 +80,10 @@ void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth) {
     object_t *obj = parent_obj->first_child;
     while (obj) {
         for (int i = 0; i < depth; ++i) {
-            printf("    ");
+            text_out("    ");
         }
         object_name_print(gd, obj);
-        printf("\n");
+        text_out("\n");
 
         if (obj->first_child) {
             print_list_vert_core(gd, obj, depth+1);
@@ -100,17 +100,17 @@ void print_list_vert(gamedata_t *gd, object_t *parent_obj) {
 void print_location(gamedata_t *gd, object_t *location) {
     putchar('\n');
     style_bold();
-    printf("**");
+    text_out("**");
     object_property_print(location, property_number(gd, "#name"));
-    printf("**");
+    text_out("**");
     style_normal();
     putchar('\n');
     object_property_print(location, property_number(gd, "#description"));
-    printf("\n");
+    text_out("\n");
     if (location->first_child) {
-        printf("\nYou can see: ");
+        text_out("\nYou can see: ");
         print_list_horz(gd, location);
-        printf(".\n");
+        text_out(".\n");
     }
 }
 
@@ -148,7 +148,7 @@ int dispatch_action(gamedata_t *gd, input_t *input) {
             dumpobj_sub(gd, input);
             return 1;
         default:
-            printf("Unhandled action #%d (%s)\n",
+        text_out("Unhandled action #%d (%s)\n",
                     input->action, input->words[0].word);
             return 0;
     }
@@ -164,27 +164,27 @@ void quit_sub(gamedata_t *gd, input_t *input) {
 
 void take_sub(gamedata_t *gd, input_t *input) {
     if (input->nouns[0]->object == gd->player) {
-        printf("Cannot take yourself.\n");
+        text_out("Cannot take yourself.\n");
     } else if (object_contains(gd->player, input->nouns[0]->object)) {
-        printf("Already taken.\n");
+        text_out("Already taken.\n");
     } else {
         if (!object_property_is_true(input->nouns[0]->object, property_number(gd, "#is-takable"), 1)) {
-            printf("Impossible.\n");
+            text_out("Impossible.\n");
         } else {
             object_move(input->nouns[0]->object, gd->player);
-            printf("Taken.\n");
+            text_out("Taken.\n");
         }
     }
 }
 
 void drop_sub(gamedata_t *gd, input_t *input) {
     if (input->nouns[0]->object == gd->player) {
-        printf("Cannot drop yourself.\n");
+        text_out("Cannot drop yourself.\n");
     } else if (!object_contains(gd->player, input->nouns[0]->object)) {
-        printf("Not carried.\n");
+        text_out("Not carried.\n");
     } else {
         object_move(input->nouns[0]->object, gd->player->parent);
-        printf("Dropped.\n");
+        text_out("Dropped.\n");
     }
 }
 
@@ -192,7 +192,7 @@ void drop_sub(gamedata_t *gd, input_t *input) {
 void move_sub(gamedata_t *gd, input_t *input) {
     property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#dir-prop"));
     if (!p || p->value.type != PT_STRING) {
-        printf("Malformed direction.\n");
+        text_out("Malformed direction.\n");
         return;
     }
 
@@ -202,25 +202,25 @@ void move_sub(gamedata_t *gd, input_t *input) {
             object_move(gd->player, prop->value.d.ptr);
             print_location(gd, gd->player->parent);
         } else if (prop->value.type == PT_STRING) {
-            printf("%s", (char*)prop->value.d.ptr);
+            text_out("%s", (char*)prop->value.d.ptr);
         }
     } else {
-        printf("Can't go that way.\n");
+        text_out("Can't go that way.\n");
     }
 }
 
 void inv_sub(gamedata_t *gd, input_t *input) {
     object_t *cur = gd->player->first_child;
     if (!cur) {
-        printf("You are carrying nothing.\n");
+        text_out("You are carrying nothing.\n");
         return;
     }
     if (input->words[1].word && input->words[1].word_no == vocab_index("wide")) {
-        printf("You are carrying: ");
+        text_out("You are carrying: ");
         print_list_horz(gd, gd->player);
         putchar('\n');
     } else {
-        printf("You are carrying:\n");
+        text_out("You are carrying:\n");
         print_list_vert(gd, gd->player);
     }
 }
@@ -231,35 +231,35 @@ void look_sub(gamedata_t *gd, input_t *input) {
 
 void putin_sub(gamedata_t *gd, input_t *input) {
     if (input->nouns[0]->object == gd->player || input->nouns[1]->object == gd->player) {
-        printf("Cannot put yourself somewhere.\n");
+        text_out("Cannot put yourself somewhere.\n");
     } else if (object_contains(input->nouns[1]->object, input->nouns[0]->object)) {
-        printf("Already there.\n");
+        text_out("Already there.\n");
     } else if (object_contains(input->nouns[0]->object, input->nouns[1]->object)) {
-        printf("Not possible.\n");
+        text_out("Not possible.\n");
     } else {
 //        property_t *p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-container"));
 //        if (!p || p->value.type != PT_INTEGER || p->value.d.num == 0) {
         if (!object_property_is_true(input->nouns[1]->object, property_number(gd, "#is-container"), 0)) {
-            printf("That can't contain things.\n");
+            text_out("That can't contain things.\n");
             return;
         }
 //        p = object_property_get(input->nouns[1]->object, property_number(gd, "#is-open"));
 //        if (p && p->value.type == PT_INTEGER && p->value.d.num == 0) {
         if (!object_property_is_true(input->nouns[1]->object, property_number(gd, "#is-open"), 1)) {
-            printf("It's not open.\n");
+            text_out("It's not open.\n");
             return;
         }
         object_move(input->nouns[0]->object, input->nouns[1]->object);
-        printf("Done.\n");
+        text_out("Done.\n");
     }
 }
 
 void examine_sub(gamedata_t *gd, input_t *input) {
     property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#description"));
     if (p && p->value.type == PT_STRING) {
-        printf("%s\n", (char*)p->value.d.ptr);
+        text_out("%s\n", (char*)p->value.d.ptr);
     } else {
-        printf("It looks as expected.\n");
+        text_out("It looks as expected.\n");
     }
 }
 

@@ -45,67 +45,67 @@ object_t* object_create(object_t *parent) {
 void object_dump(gamedata_t *gd, object_t *obj) {
     if (!obj) return;
 
-    printf("Object \"");
+    text_out("Object \"");
     object_name_print(gd, obj);
-    printf("\" at %p\n", (void*)obj);
-    printf("   PARENT: ");
+    text_out("\" at %p\n", (void*)obj);
+    text_out("   PARENT: ");
 
     if (obj->parent) {
         putchar('"');
         object_name_print(gd, obj->parent);
-        printf("\" at %p\n", (void*)obj->parent);
+        text_out("\" at %p\n", (void*)obj->parent);
     } else {
-        printf("(none)\n");
+        text_out("(none)\n");
     }
 
-    printf("   FIRST CHILD: ");
+    text_out("   FIRST CHILD: ");
     if (obj->first_child) {
         putchar('"');
         object_name_print(gd, obj->first_child);
-        printf("\" at %p\n", (void*)obj->first_child);
+        text_out("\" at %p\n", (void*)obj->first_child);
     } else {
-        printf("(none)\n");
+        text_out("(none)\n");
     }
 
-    printf("   SIBLING: ");
+    text_out("   SIBLING: ");
     if (obj->sibling) {
         putchar('"');
         object_name_print(gd, obj->sibling);
-        printf("\" at %p\n", (void*)obj->sibling);
+        text_out("\" at %p\n", (void*)obj->sibling);
     } else {
-        printf("(none)\n");
+        text_out("(none)\n");
     }
 
     if (!obj->properties) {
-        printf("   (no properties)\n");
+        text_out("   (no properties)\n");
         return;
     }
 
     property_t *prop = obj->properties;
     while (prop) {
-        printf("   %2d ", prop->id);
+        text_out("   %2d ", prop->id);
         switch(prop->value.type) {
             case PT_INTEGER:
-                printf("%d\n", prop->value.d.num);
+             text_out("%d\n", prop->value.d.num);
                 break;
             case PT_STRING:
-                printf("\"%s\"\n", (char*)prop->value.d.ptr);
+                text_out("\"%s\"\n", (char*)prop->value.d.ptr);
                 break;
             case PT_OBJECT:
                 putchar('"');
                 object_name_print(gd, (object_t*)prop->value.d.ptr);
-                printf("\" at %p\n", (void*)prop->value.d.ptr);
+                text_out("\" at %p\n", (void*)prop->value.d.ptr);
                 break;
             case PT_ARRAY:
                 putchar('(');
                 for (int i = 0; i < prop->value.array_size; ++i) {
                     value_t *cur = &((value_t*)prop->value.d.ptr)[i];
-                    printf(" %d", cur->d.num);
+                    text_out(" %d", cur->d.num);
                 }
-                printf(" )\n");
+                text_out(" )\n");
                 break;
             default:
-                printf("(unhandled type %d)\n", prop->value.type);
+            text_out("(unhandled type %d)\n", prop->value.type);
                 break;
         }
         prop = prop->next;
@@ -235,7 +235,7 @@ int object_property_is_true(object_t *obj, int pid, int default_value) {
         case PT_ARRAY:
             return 1;
         default:
-            printf("[ERROR: unknown property type %d in object_property_is_true.]\n", prop->value.type);
+            text_out("[ERROR: unknown property type %d in object_property_is_true.]\n", prop->value.type);
             return 0;
     }
 }
