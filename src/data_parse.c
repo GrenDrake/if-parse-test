@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "parse.h"
-#include "dparse.h"
 
 // dumping data
 void dump_symbol_table(FILE *fp, gamedata_t *gd);

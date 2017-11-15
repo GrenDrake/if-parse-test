@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dparse.h"
+#include "parse.h"
 
 const char *symbol_types[] = {
     "object",
