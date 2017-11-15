@@ -10,13 +10,14 @@ void dump_symbol_table(FILE *fp, gamedata_t *gd);
 
 // tokenizing
 static int valid_identifier(int ch);
-static token_t *tokenize(char *file);
+static token_t *tokenize(char *file, int allow_new_vocab);
 
 // parsing
 static int parse_action(gamedata_t *gd, list_t *list);
 static list_t* parse_list(token_t **place);
 static int parse_object(gamedata_t *gd, list_t *list);
 
+static list_t *parse_tokens_to_lists(token_t *tokens);
 static int fix_references(gamedata_t *gd);
 
 
@@ -58,7 +59,7 @@ void token_add(token_t **tokens, token_t **last_ptr, token_t *token) {
     }
 }
 
-token_t *tokenize(char *file) {
+token_t *tokenize(char *file, int allow_new_vocab) {
     if (!file) return NULL;
 
     token_t *tokens = NULL, *last_ptr = NULL;
@@ -122,8 +123,12 @@ token_t *tokenize(char *file) {
             file[pos++] = 0;
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_VOCAB;
-            vocab_raw_add(token);
-            t->text = str_dupl(token);
+            if (allow_new_vocab) {
+                vocab_raw_add(token);
+                t->text = str_dupl(token);
+            } else {
+                t->number = vocab_index(token);
+            }
             token_add(&tokens, &last_ptr, t);
         } else {
             text_out("Unexpected token '%c' (%d).\n", file[pos], file[pos]);
@@ -451,7 +456,7 @@ int tokenize_file(const char *filename) {
     file[filesize] = 0;
     fclose(fp);
 
-    token_t *new_tokens = tokenize(file);
+    token_t *new_tokens = tokenize(file, 1);
     free(file);
 
     if (master_token_list == NULL) {
@@ -467,13 +472,9 @@ int tokenize_file(const char *filename) {
     return 1;
 }
 
-
-gamedata_t* parse_tokens() {
-    vocab_build();
-
-    text_out("Building lists...\n");
+list_t *parse_tokens_to_lists(token_t *tokens) {
     list_t *lists = NULL, *last_list = NULL;
-    token_t *list_pos = master_token_list;
+    token_t *list_pos = tokens;
     while (list_pos) {
         list_t *list = parse_list(&list_pos);
         if (!list) {
@@ -487,6 +488,22 @@ gamedata_t* parse_tokens() {
             last_list = list;
         }
     }
+    return lists;
+}
+
+list_t* parse_string(const char *text) {
+    char *work_text = str_dupl(text);
+    token_t *tokens = tokenize(work_text, 0);
+    list_t *lists = parse_tokens_to_lists(tokens);
+    free(work_text);
+    return lists;
+}
+
+gamedata_t* parse_tokens() {
+    vocab_build();
+
+    text_out("Building lists...\n");
+    list_t *lists = parse_tokens_to_lists(master_token_list);
 
     text_out("Parsing lists...\n");
     gamedata_t *gd = gamedata_create();
