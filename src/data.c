@@ -37,8 +37,8 @@ void symboltable_free(symboltable_t *table) {
 }
 
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
-    symbol_t *symbol = symbol_get(gd, SYM_OBJECT, ident);
-    if (symbol) {
+    symbol_t *symbol = symbol_get(gd, ident);
+    if (symbol && symbol->type == SYM_OBJECT) {
         return symbol->d.ptr;
     }
     return NULL;
@@ -46,7 +46,7 @@ object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
 
 int property_number(gamedata_t *gd, const char *name) {
     static int next_id = 1;
-    symbol_t *symbol = symbol_get(gd, SYM_PROPERTY, name);
+    symbol_t *symbol = symbol_get(gd, name);
     if (!symbol) {
         symbol = calloc(sizeof(symbol_t), 1);
         symbol->name = str_dupl(name);
@@ -98,7 +98,7 @@ void symbol_add_value(gamedata_t *gd, const char *name, int type, int value) {
     symbol_add_core(gd, symbol);
 }
 
-symbol_t* symbol_get(gamedata_t *gd, int type, const char *name) {
+symbol_t* symbol_get(gamedata_t *gd, const char *name) {
     unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
 
     if (gd->symbols->buckets[hashcode] == NULL) {
@@ -107,7 +107,7 @@ symbol_t* symbol_get(gamedata_t *gd, int type, const char *name) {
 
     symbol_t *symbol = gd->symbols->buckets[hashcode];
     while (symbol) {
-        if (symbol->type == type && strcmp(symbol->name, name) == 0) {
+        if (strcmp(symbol->name, name) == 0) {
             return symbol;
         }
         symbol = symbol->next;

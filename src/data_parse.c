@@ -598,7 +598,7 @@ int fix_references(gamedata_t *gd) {
     action_t *cura = gd->actions;
     while (cura) {
         if (cura->action_name) {
-            symbol_t *symbol = symbol_get(gd, SYM_CONSTANT, cura->action_name);
+            symbol_t *symbol = symbol_get(gd, cura->action_name);
             if (!symbol) {
                 text_out("Action code contains unknown symbol %s.\n", cura->action_name);
             }
