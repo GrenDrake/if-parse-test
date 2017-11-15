@@ -25,14 +25,31 @@ static funcdef_t builtin_funcs[] = {
 
 
 list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
+    symbol_t *symbol;
+    list_t *new_list;
     switch(list->type) {
         case T_STRING:
         case T_INTEGER:
         case T_VOCAB:
             return list_duplicate(list);
         case T_ATOM:
-            debug_out("atom evaluation not implemented.\n");
-            return list_duplicate(list);
+            symbol = symbol_get(gd, list->text);
+            if (!symbol) {
+                debug_out("undefined value %s\n", list->text);
+                return list_create_false();
+            }
+            switch(symbol->type) {
+                case SYM_PROPERTY:
+                case SYM_CONSTANT:
+                    new_list = list_create();
+                    new_list->type = T_INTEGER;
+                    new_list->number = symbol->d.value;
+                    return new_list;
+                default:
+                    debug_out("list atom evaluated to unhandled type %d\n", symbol->type);
+                    return list_create_false();
+            }
+            break;
         case T_LIST:
             return list_run(gd, locals, list);
         default:
