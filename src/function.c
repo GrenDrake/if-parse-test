@@ -14,12 +14,14 @@ static list_t* builtin_add(gamedata_t *gd, list_t *args);
 static list_t* builtin_sub(gamedata_t *gd, list_t *args);
 static list_t* builtin_mul(gamedata_t *gd, list_t *args);
 static list_t* builtin_div(gamedata_t *gd, list_t *args);
+static list_t* builtin_dump_symbols(gamedata_t *gd, list_t *args);
 
 static funcdef_t builtin_funcs[] = {
     { "add", builtin_add },
     { "sub", builtin_sub },
     { "mul", builtin_mul },
     { "div", builtin_div },
+    { "dump-symbols", builtin_dump_symbols },
     { NULL }
 };
 
@@ -183,4 +185,9 @@ list_t* builtin_div(gamedata_t *gd, list_t *args) {
     result->type = T_INTEGER;
     result->number = total;
     return result;
+}
+
+list_t* builtin_dump_symbols(gamedata_t *gd, list_t *args) {
+    dump_symbol_table(stdout, gd);
+    return list_create_false();
 }
