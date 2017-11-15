@@ -35,7 +35,7 @@ list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
         case T_VOCAB:
             return list_duplicate(list);
         case T_ATOM:
-            symbol = symbol_get(gd, list->text);
+            symbol = symbol_get(gd->symbols, list->text);
             if (!symbol) {
                 debug_out("undefined value %s\n", list->text);
                 return list_create_false();

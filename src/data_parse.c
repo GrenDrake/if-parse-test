@@ -250,7 +250,7 @@ int parse_constant(gamedata_t *gd, list_t *list) {
     }
     switch(cur->type) {
         case T_INTEGER:
-            symbol_add_value(gd, name, SYM_CONSTANT, cur->number);
+            symbol_add_value(gd->symbols, name, SYM_CONSTANT, cur->number);
             break;
         default:
             text_out("Constant has unsopported value tyoe.\n");
@@ -328,7 +328,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
     }
     if (strcmp(prop->text, "-") != 0) {
         object_property_add_string(obj, ident_prop, str_dupl(prop->text));
-        symbol_add_ptr(gd, prop->text, SYM_OBJECT, obj);
+        symbol_add_ptr(gd->symbols, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
         obj->parent_name = val->text;
@@ -595,7 +595,7 @@ int fix_references(gamedata_t *gd) {
     action_t *cura = gd->actions;
     while (cura) {
         if (cura->action_name) {
-            symbol_t *symbol = symbol_get(gd, cura->action_name);
+            symbol_t *symbol = symbol_get(gd->symbols, cura->action_name);
             if (!symbol) {
                 text_out("Action code contains unknown symbol %s.\n", cura->action_name);
             }

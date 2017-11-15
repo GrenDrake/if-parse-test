@@ -4,7 +4,7 @@
 
 #include "parse.h"
 
-static void symbol_add_core(gamedata_t *gd, symbol_t *symbol);
+static void symbol_add_core(symboltable_t *table, symbol_t *symbol);
 
 gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
@@ -37,7 +37,7 @@ void symboltable_free(symboltable_t *table) {
 }
 
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
-    symbol_t *symbol = symbol_get(gd, ident);
+    symbol_t *symbol = symbol_get(gd->symbols, ident);
     if (symbol && symbol->type == SYM_OBJECT) {
         return symbol->d.ptr;
     }
@@ -46,13 +46,13 @@ object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
 
 int property_number(gamedata_t *gd, const char *name) {
     static int next_id = 1;
-    symbol_t *symbol = symbol_get(gd, name);
+    symbol_t *symbol = symbol_get(gd->symbols, name);
     if (!symbol) {
         symbol = calloc(sizeof(symbol_t), 1);
         symbol->name = str_dupl(name);
         symbol->type = SYM_PROPERTY;
         symbol->d.value = next_id++;
-        symbol_add_core(gd, symbol);
+        symbol_add_core(gd->symbols, symbol);
     }
 
     return symbol->d.value;
@@ -72,40 +72,40 @@ char *str_dupl_left(const char *text, int size) {
     return new_text;
 }
 
-void symbol_add_core(gamedata_t *gd, symbol_t *symbol) {
+void symbol_add_core(symboltable_t *table, symbol_t *symbol) {
     unsigned hashcode = hash_string(symbol->name) % SYMBOL_TABLE_BUCKETS;
-    if (gd->symbols->buckets[hashcode] != NULL) {
-        symbol->next = gd->symbols->buckets[hashcode];
+    if (table->buckets[hashcode] != NULL) {
+        symbol->next = table->buckets[hashcode];
     }
-    gd->symbols->buckets[hashcode] = symbol;
+    table->buckets[hashcode] = symbol;
 }
 
-void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value) {
+void symbol_add_ptr(symboltable_t *table, const char *name, int type, void *value) {
     symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
     symbol->name = str_dupl(name);
     symbol->type = type;
     symbol->d.ptr = value;
 
-    symbol_add_core(gd, symbol);
+    symbol_add_core(table, symbol);
 }
 
-void symbol_add_value(gamedata_t *gd, const char *name, int type, int value) {
+void symbol_add_value(symboltable_t *table, const char *name, int type, int value) {
     symbol_t *symbol = calloc(sizeof(gamedata_t), 1);
     symbol->name = str_dupl(name);
     symbol->type = type;
     symbol->d.value = value;
 
-    symbol_add_core(gd, symbol);
+    symbol_add_core(table, symbol);
 }
 
-symbol_t* symbol_get(gamedata_t *gd, const char *name) {
+symbol_t* symbol_get(symboltable_t *table, const char *name) {
     unsigned hashcode = hash_string(name) % SYMBOL_TABLE_BUCKETS;
 
-    if (gd->symbols->buckets[hashcode] == NULL) {
+    if (table->buckets[hashcode] == NULL) {
         return NULL;
     }
 
-    symbol_t *symbol = gd->symbols->buckets[hashcode];
+    symbol_t *symbol = table->buckets[hashcode];
     while (symbol) {
         if (strcmp(symbol->name, name) == 0) {
             return symbol;

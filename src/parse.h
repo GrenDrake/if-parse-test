@@ -223,9 +223,9 @@ object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
 int property_number(gamedata_t *gd, const char *name);
 char *str_dupl(const char *text);
 char *str_dupl_left(const char *text, int size);
-void symbol_add_value(gamedata_t *gd, const char *name, int type, int value);
-void symbol_add_ptr(gamedata_t *gd, const char *name, int type, void *value);
-symbol_t* symbol_get(gamedata_t *gd, const char *name);
+void symbol_add_value(symboltable_t *table, const char *name, int type, int value);
+void symbol_add_ptr(symboltable_t *table, const char *name, int type, void *value);
+symbol_t* symbol_get(symboltable_t *table, const char *name);
 void symboltable_free(symboltable_t *table);
 
 
