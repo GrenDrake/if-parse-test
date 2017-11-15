@@ -406,6 +406,17 @@ int main() {
             text_out("\n> ");
             input->input = read_line();
 
+            if (input->input[0] == '(') {
+                list_t *list = parse_string(input->input);
+                input_free(input);
+                input = NULL;
+                list_t *result = list_run(gd, NULL, list);
+                text_out("RESULT: ");
+                dump_list(stdout, result);
+                text_out("\n");
+                continue;
+            }
+
             if (!tokenize(input)) {
                 text_out("Pardon?\n");
                 input_free(input);

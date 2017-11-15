@@ -179,6 +179,7 @@ void token_free(token_t *token);
 
 void list_add(list_t *list, list_t *item);
 list_t *list_create();
+list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
 int list_size(list_t *list);
 
@@ -228,6 +229,7 @@ void symboltable_free(symboltable_t *table);
 
 int tokenize_file(const char *filename);
 gamedata_t* parse_tokens();
+list_t* parse_string(const char *text);
 
 void debug_out(const char *msg, ...);
 void text_out(const char *msg, ...);
@@ -243,5 +245,7 @@ void print_list_horz(gamedata_t *gd, object_t *parent_obj);
 void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
 void print_list_vert(gamedata_t *gd, object_t *parent_obj);
 void print_location(gamedata_t *gd, object_t *location);
+
+list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list);
 
 #endif // PARSE_H
