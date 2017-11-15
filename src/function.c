@@ -84,7 +84,7 @@ list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list) {
         }
     }
     if (result == -1) {
-        debug_out("tried to run non-existant function %s", name);
+        debug_out("tried to run non-existant function %s\n", name);
         list_free(args);
         return list_create_false();
     }
