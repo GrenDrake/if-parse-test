@@ -5,9 +5,6 @@
 
 #include "parse.h"
 
-// dumping data
-void dump_symbol_table(FILE *fp, gamedata_t *gd);
-
 // tokenizing
 static int valid_identifier(int ch);
 static token_t *tokenize(char *file, int allow_new_vocab);

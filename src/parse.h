@@ -229,6 +229,7 @@ symbol_t* symbol_get(gamedata_t *gd, const char *name);
 void symboltable_free(symboltable_t *table);
 
 
+void dump_symbol_table(FILE *fp, gamedata_t *gd);
 int tokenize_file(const char *filename);
 gamedata_t* parse_tokens();
 list_t* parse_string(const char *text);
