@@ -37,7 +37,7 @@ list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
             return list_run(gd, locals, list);
         default:
             debug_out("Tried to evaluate list of unknown type %d\n", list->type);
-            return NULL;
+            return list_create_false();
     }
 }
 
@@ -67,7 +67,7 @@ list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list) {
     if (result == -1) {
         debug_out("tried to run non-existant function %s", name);
         list_free(args);
-        return NULL;
+        return list_create_false();
     }
 
     list_t *run_result = builtin_funcs[result].func(gd, args);
@@ -86,7 +86,7 @@ list_t* builtin_add(gamedata_t *gd, list_t *args) {
     while (iter) {
         if (iter->type != T_INTEGER) {
             debug_out("add: requires integer arguments\n");
-            return NULL;
+            return list_create_false();
         }
         total += iter->number;
         iter = iter->next;
@@ -103,7 +103,7 @@ list_t* builtin_sub(gamedata_t *gd, list_t *args) {
     if (iter) {
         if (iter->type != T_INTEGER) {
             debug_out("sub: requires integer arguments\n");
-            return NULL;
+            return list_create_false();
         }
         total = iter->number;
         iter = iter->next;
@@ -111,7 +111,7 @@ list_t* builtin_sub(gamedata_t *gd, list_t *args) {
         while (iter) {
             if (iter->type != T_INTEGER) {
                 debug_out("sub: requires integer arguments\n");
-                return NULL;
+                return list_create_false();
             }
             total -= iter->number;
             iter = iter->next;
@@ -130,7 +130,7 @@ list_t* builtin_mul(gamedata_t *gd, list_t *args) {
     while (iter) {
         if (iter->type != T_INTEGER) {
             debug_out("mul: requires integer arguments\n");
-            return NULL;
+            return list_create_false();
         }
         total *= iter->number;
         iter = iter->next;
@@ -147,7 +147,7 @@ list_t* builtin_div(gamedata_t *gd, list_t *args) {
     if (iter) {
         if (iter->type != T_INTEGER) {
             debug_out("div: requires integer arguments\n");
-            return NULL;
+            return list_create_false();
         }
         total = iter->number;
         iter = iter->next;
@@ -155,7 +155,7 @@ list_t* builtin_div(gamedata_t *gd, list_t *args) {
         while (iter) {
             if (iter->type != T_INTEGER) {
                 debug_out("div: requires integer arguments\n");
-                return NULL;
+                return list_create_false();
             }
             total /= iter->number;
             iter = iter->next;
