@@ -12,6 +12,9 @@
     player player
     intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!")
 
+(function test (a b c)
+    (add 5 7))
+
 (action act-quit (<q> <quit>))
 (action act-take (<get> <take>) noun)
 (action act-drop <drop> noun)

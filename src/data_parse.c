@@ -40,7 +40,7 @@ void dump_symbol_table(FILE *fp, gamedata_t *gd) {
  * Tokenizing
  * ****************************************************************************/
 int valid_identifier(int ch) {
-    if (isalnum(ch) || ch == '-' || ch == '_') {
+    if (isalnum(ch) || ch == '-' || ch == '_' || ch == '#') {
         return 1;
     }
     return 0;
@@ -310,6 +310,33 @@ list_t* parse_list(token_t **place) {
     return list;
 }
 
+int parse_function(gamedata_t *gd, list_t *list) {
+    if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
+            || strcmp(list->child->text,"function") || list->child->next == NULL) {
+        return 0;
+    }
+
+    list_t *cur = list->child->next;
+    function_t *func = calloc(sizeof(function_t), 1);
+    if (cur->type != T_ATOM) {
+        text_out("Function name must be atom.\n");
+        return 0;
+    }
+    func->name = str_dupl(cur->text);
+    symbol_add_ptr(gd->symbols, func->name, SYM_FUNCTION, (void*)func);
+
+    cur = cur->next;
+    if (!cur || cur->type != T_LIST) {
+        text_out("Function has no argument list. (Use empty list if no arguments.)\n");
+        return 0;
+    }
+    // handle arguments
+
+    cur = cur->next;
+    func->body = list_duplicate(cur);
+    return 1;
+}
+
 #define MAX_PROPERTY_NAME 64
 int parse_object(gamedata_t *gd, list_t *list) {
     if (list->type != T_LIST || list->child == NULL || list->child->type != T_ATOM
@@ -529,6 +556,10 @@ gamedata_t* parse_tokens() {
             }
         } else if (strcmp(clist->child->text, "constant") == 0) {
             if (!parse_constant(gd, clist)) {
+                return NULL;
+            }
+        } else if (strcmp(clist->child->text, "function") == 0) {
+            if (!parse_function(gd, clist)) {
                 return NULL;
             }
         } else {

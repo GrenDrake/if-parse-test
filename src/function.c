@@ -8,6 +8,7 @@ typedef struct FUNCDEF {
     list_t* (*func)(gamedata_t *gd, list_t *args);
 } funcdef_t;
 
+list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args);
 list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list);
 
 static list_t* builtin_add(gamedata_t *gd, list_t *args);
@@ -25,9 +26,17 @@ static funcdef_t builtin_funcs[] = {
     { NULL }
 };
 
+list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args) {
+    symboltable_t *locals = symboltable_create();
+
+    list_t *result = list_run(gd, locals, func->body);
+
+    symboltable_free(locals);
+    return result;
+}
 
 list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
-    symbol_t *symbol;
+    symbol_t *symbol = NULL;
     list_t *new_list;
     switch(list->type) {
         case T_STRING:
@@ -35,7 +44,12 @@ list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
         case T_VOCAB:
             return list_duplicate(list);
         case T_ATOM:
-            symbol = symbol_get(gd->symbols, list->text);
+            if (locals) {
+                symbol = symbol_get(locals, list->text);
+            }
+            if (!symbol) {
+                symbol = symbol_get(gd->symbols, list->text);
+            }
             if (!symbol) {
                 debug_out("undefined value %s\n", list->text);
                 return list_create_false();
@@ -75,6 +89,15 @@ list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list) {
     while (iter) {
         list_add(args, list_evaluate(gd, locals, iter));
         iter = iter->next;
+    }
+
+    symbol_t *user_func = symbol_get(gd->symbols, name);
+    if (user_func) {
+        if (user_func->type != SYM_FUNCTION) {
+            debug_out("tried to run non-function %s\n", name);
+            return list_create_false();
+        }
+        return list_run_function(gd, (function_t*)user_func->d.ptr, args);
     }
 
     int result = -1;

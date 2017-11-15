@@ -43,6 +43,7 @@
 #define SYM_OBJECT 0
 #define SYM_PROPERTY 1
 #define SYM_CONSTANT 2
+#define SYM_FUNCTION 3
 
 #define PARSE_MAX_OBJS 64
 #define PARSE_MAX_NOUNS 2
@@ -90,6 +91,12 @@ typedef struct SYMBOL_INFO {
 typedef struct SYMBOL_TABLE {
     symbol_t *buckets[SYMBOL_TABLE_BUCKETS];
 } symboltable_t;
+
+typedef struct FUNCTION {
+    const char *name;
+    symboltable_t symbols;
+    list_t *body;
+} function_t;
 
 typedef struct GRAMMAR {
     int type;
