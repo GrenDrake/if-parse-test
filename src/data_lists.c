@@ -28,32 +28,39 @@ void dump_tokens(FILE *dest, token_t *tokens) {
 }
 
 void dump_list(FILE *dest, list_t *list) {
-    list_t *pos = list->child;
-    fprintf(dest, "{");
-    while (pos) {
-        switch(pos->type) {
-            case T_LIST:
+    if (!list) {
+        fprintf(dest, "(NULL)");
+        return;
+    }
+
+    list_t *pos;
+    switch(list->type) {
+        case T_LIST:
+            pos = list->child;
+            fprintf(dest, "{");
+            while (pos) {
                 fprintf(dest, " ");
                 dump_list(dest, pos);
-                break;
-            case T_STRING:
-                fprintf(dest, " ~%s~", pos->text);
-                break;
-            case T_ATOM:
-                fprintf(dest, " %s", pos->text);
-                break;
-            case T_INTEGER:
-                fprintf(dest, " %d", pos->number);
-                break;
-            case T_VOCAB:
-                fprintf(dest, " <%d>", pos->number);
-                break;
-            default:
-                fprintf(dest, " [%d: unhandled]", pos->type);
-        }
-        pos = pos->next;
+                pos = pos->next;
+            }
+            fprintf(dest, " }");
+            break;
+        case T_STRING:
+            fprintf(dest, "~%s~", list->text);
+            break;
+        case T_ATOM:
+            fprintf(dest, "%s", list->text);
+            break;
+        case T_INTEGER:
+            fprintf(dest, "%d", list->number);
+            break;
+        case T_VOCAB:
+            fprintf(dest, "<%d>", list->number);
+            break;
+        default:
+            fprintf(dest, "[%d: unhandled]", list->type);
     }
-    fprintf(dest, " }");
+
 }
 
 
