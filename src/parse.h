@@ -188,6 +188,7 @@ int tokenize_file(const char *filename);
 gamedata_t* parse_tokens();
 
 void debug_out(const char *msg, ...);
+void text_out(const char *msg, ...);
 char* read_line();
 void style_bold();
 void style_normal();
