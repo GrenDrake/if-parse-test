@@ -9,7 +9,7 @@ static void symbol_add_core(symboltable_t *table, symbol_t *symbol);
 gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
     gd->root = object_create(NULL);
-    gd->symbols = calloc(sizeof(symboltable_t), 1);
+    gd->symbols = symboltable_create();
     return gd;
 }
 
@@ -21,6 +21,11 @@ unsigned hash_string(const char *text) {
         hash *= 16777619;
     }
     return hash;
+}
+
+symboltable_t* symboltable_create() {
+    symboltable_t *table = calloc(sizeof(symboltable_t), 1);
+    return table;
 }
 
 void symboltable_free(symboltable_t *table) {

@@ -217,6 +217,7 @@ int action_add(gamedata_t *gd, action_t *action);
 
 gamedata_t *gamedata_create();
 unsigned hash_string(const char *text);
+symboltable_t* symboltable_create();
 gamedata_t* load_data();
 void free_data(gamedata_t *gd);
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
