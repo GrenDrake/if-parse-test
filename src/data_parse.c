@@ -5,7 +5,9 @@
 
 #include "parse.h"
 
-// tokenizing
+static int escape_string(char *text);
+
+    // tokenizing
 static int valid_identifier(int ch);
 static token_t *tokenize(char *file, int allow_new_vocab);
 
@@ -19,6 +21,35 @@ static list_t *parse_tokens_to_lists(token_t *tokens);
 static int parse_lists_toplevel(gamedata_t *gd, list_t *lists);
 static int fix_references(gamedata_t *gd);
 
+
+int escape_string(char *text) {
+    int found_error = FALSE;
+    if (!text || text[0] == 0) {
+        return FALSE;
+    }
+
+    for (int i = 0; i < strlen(text); ++i) {
+        if (text[i] == '\\') {
+            int escape_char = text[i+1];
+            switch(escape_char) {
+                case 0:
+                    debug_out("escape_string: incomplete escape at end of string\n");
+                    found_error = TRUE;
+                    break;
+                case 'n':
+                    memmove(&text[i], &text[i+1], strlen(text) - i);
+                    text[i] = '\n';
+                    break;
+                default:
+                    memmove(&text[i], &text[i+1], strlen(text) - i);
+                    debug_out("escape_string: unrecognized escape \\%c\n", escape_char);
+                    found_error = TRUE;
+                }
+        }
+    }
+
+    return found_error;
+}
 
 /* ****************************************************************************
  * Dumping data to a stream (for debugging)
@@ -109,6 +140,7 @@ token_t *tokenize(char *file, int allow_new_vocab) {
                 ++pos;
             }
             file[pos++] = 0;
+            escape_string(token);
             token_t *t = calloc(sizeof(token_t), 1);
             t->type = T_STRING;
             t->text = str_dupl(token);
