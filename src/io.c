@@ -5,9 +5,17 @@
 #include "parse.h"
 
 void debug_out(const char *msg, ...) {
+    static FILE *logfile = NULL;
+
+    if (logfile == NULL) {
+        logfile = fopen("debug.log", "wt");
+        setvbuf(logfile, NULL, _IONBF, 0);
+    }
+
+
     va_list args;
     va_start(args, msg);
-    vfprintf(stderr, msg, args);
+    vfprintf(logfile, msg, args);
     va_end(args);
 }
 
