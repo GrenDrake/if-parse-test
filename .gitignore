@@ -1,2 +1,4 @@
 *.o
 parse
+.DS_Store
+debug.log
