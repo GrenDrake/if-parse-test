@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "parse.h"
 
@@ -14,7 +15,8 @@ void object_name_print(gamedata_t *gd, object_t *obj);
 void object_property_print(object_t *obj, int prop_num);
 void print_location(gamedata_t *gd, object_t *location);
 int dispatch_action(gamedata_t *gd, input_t *input);
-int game_init(gamedata_t *gd);
+static int game_init(gamedata_t *gd);
+static void game_loop(gamedata_t *gd);
 
 
 /* ************************************************************************ *
@@ -388,11 +390,8 @@ void input_free(input_t *input) {
     free(input);
 }
 
-int main() {
-    gamedata_t *gd = load_data();
-    if (!gd) return 1;
-    if (!game_init(gd)) return 1;
-
+void game_loop(gamedata_t *gd) {
+    debug_out("game_loop: entering main game loop\n");
     input_t *input = NULL;
     print_location(gd, gd->player->parent);
     while (!gd->quit_game) {
@@ -431,8 +430,21 @@ int main() {
             input = NULL;
         }
     }
+}
+
+int main() {
+    time_t start_time = time(NULL);
+    debug_out("main: starting up at %s", ctime(&start_time));
+
+    gamedata_t *gd = load_data();
+    if (!gd) return 1;
+    if (!game_init(gd)) return 1;
+
+    game_loop(gd);
 
     text_out("Goodbye!\n\n");
+    time_t end_time = time(NULL);
+    debug_out("main: shutting down at %s", ctime(&end_time));
     free_data(gd);
     return 0;
 }
