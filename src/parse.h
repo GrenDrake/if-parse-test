@@ -230,6 +230,7 @@ void vocab_raw_add(const char *the_word);
 void vocab_build();
 void vocab_raw_free();
 int vocab_index(const char *word);
+int vocab_is_built();
 int action_add(gamedata_t *gd, action_t *action);
 
 

@@ -153,12 +153,13 @@ token_t *tokenize(char *file, int allow_new_vocab) {
             }
             file[pos++] = 0;
             token_t *t = calloc(sizeof(token_t), 1);
-            t->type = T_VOCAB;
             if (allow_new_vocab) {
                 vocab_raw_add(token);
                 t->text = str_dupl(token);
+                t->type = T_VOCAB;
             } else {
                 t->number = vocab_index(token);
+                t->type = T_INTEGER;
             }
             token_add(&tokens, &last_ptr, t);
         } else {

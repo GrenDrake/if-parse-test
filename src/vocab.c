@@ -10,7 +10,7 @@ typedef struct VOCAB {
     struct VOCAB *next;
 } vocab_t;
 
-static char **vocab;
+static char **vocab = NULL;
 static unsigned vocab_size = 0;
 static vocab_t *vocab_list = NULL;
 
@@ -103,6 +103,10 @@ int vocab_index(const char *word) {
         }
     }
     return -1;
+}
+
+int vocab_is_built() {
+    return vocab != NULL;
 }
 
 
