@@ -1,6 +1,14 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 0
 #define VERSION_BUILD 0
@@ -18,6 +26,7 @@
 #define PT_OBJECT 2
 #define PT_ARRAY 3
 #define PT_INTEGER 4
+#define PT_TMPVOCAB 98
 #define PT_TMPNAME 99
 
 #define ACT_QUIT  0
@@ -183,6 +192,7 @@ void dump_list(FILE *dest, list_t *list);
 void dump_tokens(FILE *dest, token_t *tokens);
 
 void token_free(token_t *token);
+void token_freelist(token_t *tokens);
 
 void list_add(list_t *list, list_t *item);
 list_t *list_create();
@@ -190,6 +200,7 @@ list_t *list_create_false();
 list_t *list_create_true();
 list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
+void list_freelist(list_t *lists);
 int list_size(list_t *list);
 
 
@@ -245,6 +256,7 @@ list_t* parse_string(const char *text);
 void debug_out(const char *msg, ...);
 void text_out(const char *msg, ...);
 char* read_line();
+char* read_file(const char *filename);
 void style_bold();
 void style_normal();
 void style_reverse();

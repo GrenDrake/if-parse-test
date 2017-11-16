@@ -76,6 +76,15 @@ void token_free(token_t *token) {
     free(token);
 }
 
+void token_freelist(token_t *tokens) {
+    token_t *token = tokens;
+    while (token) {
+        token_t *next = token->next;
+        token_free(token);
+        token = next;
+    }
+}
+
 
 /* ****************************************************************************
  * List manipulation
@@ -152,6 +161,15 @@ void list_free(list_t *list) {
         free(list->text);
     }
     free(list);
+}
+
+void list_freelist(list_t *lists) {
+    list_t *next_list;
+    while (lists) {
+        next_list = lists->next;
+        list_free(lists);
+        lists = next_list;
+    }
 }
 
 int list_size(list_t *list) {

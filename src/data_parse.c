@@ -14,7 +14,9 @@ static int parse_action(gamedata_t *gd, list_t *list);
 static list_t* parse_list(token_t **place);
 static int parse_object(gamedata_t *gd, list_t *list);
 
+static list_t* parse_file(const char *filename);
 static list_t *parse_tokens_to_lists(token_t *tokens);
+static int parse_lists_toplevel(gamedata_t *gd, list_t *lists);
 static int fix_references(gamedata_t *gd);
 
 
@@ -152,7 +154,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
         act->action_name = NULL;
     } else if (cur->type == T_ATOM) {
         act->action_code = 0;
-        act->action_name = cur->text;
+        act->action_name = str_dupl(cur->text);
     } else {
         text_out("Action number must be integer or atom.\n");
         return 0;
@@ -170,7 +172,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
         switch(cur->type) {
             case T_VOCAB:
                 act->grammar[pos].type = GT_WORD;
-                act->grammar[pos].value = vocab_index(cur->text);
+                act->grammar[pos].ptr = str_dupl(cur->text);
                 ++pos;
                 break;
             case T_ATOM:
@@ -200,7 +202,7 @@ int parse_action(gamedata_t *gd, list_t *list) {
                     switch (sub->type) {
                         case T_VOCAB:
                             act->grammar[pos].type = GT_WORD;
-                            act->grammar[pos].value = vocab_index(sub->text);
+                            act->grammar[pos].ptr = str_dupl(sub->text);
                             if (sub->next) {
                                 act->grammar[pos].flags |= GF_ALT;
                             }
@@ -358,7 +360,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
         symbol_add_ptr(gd->symbols, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
-        obj->parent_name = val->text;
+        obj->parent_name = str_dupl(val->text);
     }
     prop = val->next;
 
@@ -383,7 +385,9 @@ int parse_object(gamedata_t *gd, list_t *list) {
             property_t *p = object_property_get(obj, p_num);
             p->value.type = PT_TMPNAME;
         } else if (val->type == T_VOCAB) {
-            object_property_add_integer(obj, p_num, vocab_index(val->text));
+            object_property_add_string(obj, p_num, str_dupl(val->text));
+            property_t *p = object_property_get(obj, p_num);
+            p->value.type = PT_TMPVOCAB;
         } else if (val->type == T_INTEGER) {
             object_property_add_integer(obj, p_num, val->number);
         } else if (val->type == T_LIST) {
@@ -399,8 +403,8 @@ int parse_object(gamedata_t *gd, list_t *list) {
                         arr[counter].d.num = cur->number;
                         break;
                     case T_VOCAB:
-                        arr[counter].type = PT_INTEGER;
-                        arr[counter].d.num = vocab_index(cur->text);
+                        arr[counter].type = PT_TMPVOCAB;
+                        arr[counter].d.ptr = str_dupl(cur->text);
                         break;
                     case T_STRING:
                         arr[counter].type = PT_STRING;
@@ -441,14 +445,45 @@ int parse_object(gamedata_t *gd, list_t *list) {
 token_t *master_token_list = NULL;
 
 gamedata_t* load_data() {
-    if (!tokenize_file("game.dat") || !tokenize_file("game2.dat")) {
+    const char *filelist[] = {
+        "game.dat",
+        "game2.dat",
+        NULL
+    };
+    gamedata_t *gd = gamedata_create();
+    int found_error = FALSE;
+
+    for (int i = 0; filelist[i] != NULL; ++i) {
+        list_t *lists = parse_file(filelist[i]);
+        if (!lists) {
+            debug_out("load_data: failed parse %s (1)\n", filelist[i]);
+            found_error = TRUE;
+            continue;
+        }
+
+        if (!parse_lists_toplevel(gd, lists)) {
+            debug_out("load_data: failed parse %s (2)\n", filelist[i]);
+            found_error = TRUE;
+            continue;
+        }
+
+        list_freelist(lists);
+    }
+
+    if (found_error) {
+        free_data(gd);
         return NULL;
     }
-    gamedata_t *gd = parse_tokens();
-    if (!gd) {
-        debug_out("Error loading game data.\n");
+
+    debug_out("load_data: finalizing loaded data\n");
+    vocab_build();
+    if (!fix_references(gd)) {
+        debug_out("load_data: failed to update references\n");
+        free_data(gd);
         return NULL;
     }
+
+    debug_out("load_data: completed loading game data\n");
     return gd;
 }
 
@@ -465,35 +500,26 @@ void free_data(gamedata_t *gd) {
     free(gd);
 }
 
-int tokenize_file(const char *filename) {
-    debug_out("Tokenizing source file %s...\n", filename);
-    FILE *fp = fopen(filename, "rt");
-    if (!fp) {
-        debug_out("FATAL: Could not open file '%s'\n", filename);
-        return 0;
-    }
-    fseek(fp, 0, SEEK_END);
-    size_t filesize = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char *file = malloc(filesize+1);
-    fread(file, filesize, 1, fp);
-    file[filesize] = 0;
-    fclose(fp);
+list_t* parse_string(const char *text) {
+    char *work_text = str_dupl(text);
+    token_t *tokens = tokenize(work_text, 0);
+    list_t *lists = parse_tokens_to_lists(tokens);
+    token_freelist(tokens);
+    free(work_text);
+    return lists;
+}
 
-    token_t *new_tokens = tokenize(file, 1);
+list_t* parse_file(const char *filename) {
+    debug_out("parse_file: parsing %s\n", filename);
+
+    char *file = read_file(filename);
+    token_t *tokens = tokenize(file, 1);
+    list_t *lists = parse_tokens_to_lists(tokens);
+    token_freelist(tokens);
     free(file);
 
-    if (master_token_list == NULL) {
-        master_token_list = new_tokens;
-    } else {
-        token_t *old_token = master_token_list;
-        while (old_token->next) {
-            old_token = old_token->next;
-        }
-        old_token->next = new_tokens;
-    }
-
-    return 1;
+    debug_out("parse_file: completed %s\n", filename);
+    return lists;
 }
 
 list_t *parse_tokens_to_lists(token_t *tokens) {
@@ -515,81 +541,47 @@ list_t *parse_tokens_to_lists(token_t *tokens) {
     return lists;
 }
 
-list_t* parse_string(const char *text) {
-    char *work_text = str_dupl(text);
-    token_t *tokens = tokenize(work_text, 0);
-    list_t *lists = parse_tokens_to_lists(tokens);
-    free(work_text);
-    return lists;
-}
-
-gamedata_t* parse_tokens() {
-    vocab_build();
-
-    text_out("Building lists...\n");
-    list_t *lists = parse_tokens_to_lists(master_token_list);
-
-    text_out("Parsing lists...\n");
-    gamedata_t *gd = gamedata_create();
+int parse_lists_toplevel(gamedata_t *gd, list_t *lists) {
     list_t *clist = lists;
     while (clist) {
         if (clist->type != T_LIST) {
-            text_out("Expected list at top level.\n");
-            return NULL;
+            debug_out("parse_lists_toplevel: expected list at top level.\n");
+            return 0;
         }
         if (clist->child == NULL) {
-            text_out("Empty list found at tope level.\n");
-            return NULL;
+            debug_out("parse_lists_toplevel: empty list found at top level.\n");
+            return 0;
         }
         if (clist->child->type != T_ATOM) {
-            text_out("Top-level list must start with atom.\n");
-            return NULL;
+            debug_out("parse_lists_toplevel: list must start with atom.\n");
+            return 0;
         }
 
         if (strcmp(clist->child->text, "object") == 0) {
             if (!parse_object(gd, clist)) {
-                return NULL;
+                return 0;
             }
         } else if (strcmp(clist->child->text, "action") == 0) {
             if (!parse_action(gd, clist)) {
-                return NULL;
+                return 0;
             }
         } else if (strcmp(clist->child->text, "constant") == 0) {
             if (!parse_constant(gd, clist)) {
-                return NULL;
+                return 0;
             }
         } else if (strcmp(clist->child->text, "function") == 0) {
             if (!parse_function(gd, clist)) {
-                return NULL;
+                return 0;
             }
         } else {
-            text_out("Unknown top level construct %s.\n", clist->child->text);
-            return NULL;
+            debug_out("parse_lists_toplevel: unknown top level construct %s.\n", clist->child->text);
+            return 0;
         }
 
         clist = clist->next;
     }
 
-    text_out("Setting object references...\n");
-    if (!fix_references(gd)) {
-        return NULL;
-    }
-
-    text_out("Data loaded. Freeing temporary memory...\n\n");
-    token_t *next, *here = master_token_list;
-    while (here) {
-        next = here->next;
-        token_free(here);
-        here = next;
-    }
-    list_t *next_list;
-    while (lists) {
-        next_list = lists->next;
-        list_free(lists);
-        lists = next_list;
-    }
-
-    return gd;
+    return 1;
 }
 
 int fix_references(gamedata_t *gd) {
@@ -599,10 +591,11 @@ int fix_references(gamedata_t *gd) {
         if (curo->parent_name) {
             object_t *parent = object_get_by_ident(gd, curo->parent_name);
             if (!parent) {
-                text_out("Unknown object name %s.\n", curo->parent_name);
+                debug_out("fix_references: unknown object name %s.\n", curo->parent_name);
                 return 0;
             }
             object_move(curo, parent);
+            free((void*)curo->parent_name);
             curo->parent_name = NULL;
         }
 
@@ -612,10 +605,24 @@ int fix_references(gamedata_t *gd) {
             if (p->value.type == PT_TMPNAME) {
                 object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
                 if (!obj) {
-                    text_out("Undefined reference to %s.\n", (char*)p->value.d.ptr);
+                    text_out("fix_references: undefined reference to %s.\n", (char*)p->value.d.ptr);
                     return 0;
                 }
                 object_property_add_object(curo, p->id, obj);
+            } else if (p->value.type == PT_TMPVOCAB) {
+                int vocab_num = vocab_index(p->value.d.ptr);
+                free(p->value.d.ptr);
+                object_property_add_integer(curo, p->id, vocab_num);
+            } else if (p->value.type == PT_ARRAY) {
+                for (int i = 0; i < p->value.array_size; ++i) {
+                    value_t *val = &((value_t*)p->value.d.ptr)[i];
+                    if (val->type == PT_TMPVOCAB) {
+                        int vocab_num = vocab_index(val->d.ptr);
+                        free(val->d.ptr);
+                        val->d.num = vocab_num;
+                        val->type = PT_INTEGER;
+                    }
+                }
             }
             p = next;
         }
@@ -631,6 +638,7 @@ int fix_references(gamedata_t *gd) {
                 text_out("Action code contains unknown symbol %s.\n", cura->action_name);
             }
             cura->action_code = symbol->d.value;
+            free((void*)cura->action_name);
             cura->action_name = NULL;
         }
         for (int i = 0; i < GT_MAX_TOKENS; ++i) {
@@ -642,6 +650,9 @@ int fix_references(gamedata_t *gd) {
                     return 0;
                 }
                 free(name);
+            } else if (cura->grammar[i].type == GT_WORD) {
+                cura->grammar[i].value = vocab_index(cura->grammar[i].ptr);
+                free(cura->grammar[i].ptr);
             }
         }
         cura = cura->next;

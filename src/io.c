@@ -24,6 +24,22 @@ char* read_line() {
     return buffer;
 }
 
+char* read_file(const char *filename) {
+    FILE *fp = fopen(filename, "rt");
+    if (!fp) {
+        debug_out("read_file: Could not open file '%s'\n", filename);
+        return NULL;
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t filesize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *file = malloc(filesize+1);
+    fread(file, filesize, 1, fp);
+    file[filesize] = 0;
+    fclose(fp);
+    return file;
+}
+
 void style_bold() {
     text_out("\x1b[1m");
 }
