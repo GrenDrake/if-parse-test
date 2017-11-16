@@ -453,6 +453,15 @@ gamedata_t* load_data() {
     gamedata_t *gd = gamedata_create();
     int found_error = FALSE;
 
+    vocab_raw_add("then");
+    vocab_raw_add("the");
+    vocab_raw_add("a");
+    vocab_raw_add("an");
+    vocab_raw_add(".");
+    vocab_raw_add(",");
+    vocab_raw_add(":");
+    vocab_raw_add(";");
+
     for (int i = 0; filelist[i] != NULL; ++i) {
         list_t *lists = parse_file(filelist[i]);
         if (!lists) {

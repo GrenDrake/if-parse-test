@@ -389,11 +389,6 @@ void input_free(input_t *input) {
 }
 
 int main() {
-    vocab_raw_add("then");
-    vocab_raw_add(".");
-    vocab_raw_add(",");
-    vocab_raw_add(":");
-    vocab_raw_add(";");
     gamedata_t *gd = load_data();
     if (!gd) return 1;
     if (!game_init(gd)) return 1;
