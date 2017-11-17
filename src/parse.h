@@ -53,6 +53,7 @@
 #define SYM_PROPERTY 1
 #define SYM_CONSTANT 2
 #define SYM_FUNCTION 3
+#define SYM_LIST 4
 
 #define PARSE_MAX_OBJS 64
 #define PARSE_MAX_NOUNS 2
@@ -104,6 +105,7 @@ typedef struct SYMBOL_TABLE {
 typedef struct FUNCTION {
     const char *name;
     symboltable_t symbols;
+    list_t *arg_list;
     list_t *body;
 } function_t;
 

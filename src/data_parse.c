@@ -365,7 +365,14 @@ int parse_function(gamedata_t *gd, list_t *list) {
         text_out("Function has no argument list. (Use empty list if no arguments.)\n");
         return 0;
     }
-    // handle arguments
+    list_t *c_arg = cur->child;
+    while (c_arg) {
+        if (c_arg->type != T_ATOM) {
+            text_out("parse_function: arguments to function %s must be atoms.\n", func->name);
+        }
+        c_arg = c_arg->next;
+    }
+    func->arg_list = list_duplicate(cur);
 
     cur = cur->next;
     func->body = list_duplicate(cur);

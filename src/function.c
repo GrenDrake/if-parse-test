@@ -40,6 +40,18 @@ static funcdef_t builtin_funcs[] = {
 list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args) {
     symboltable_t *locals = symboltable_create();
 
+    list_t *arg_name = func->arg_list->child;
+    list_t *cur_arg = args->child;
+    while (arg_name) {
+        if (cur_arg) {
+            symbol_add_ptr(locals, arg_name->text, SYM_LIST, cur_arg);
+            cur_arg = cur_arg->next;
+        } else {
+            symbol_add_value(locals, arg_name->text, SYM_CONSTANT, 0);
+        }
+        arg_name = arg_name->next;
+    }
+
     list_t *result = list_run(gd, locals, func->body);
 
     symboltable_free(locals);
@@ -66,6 +78,9 @@ list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
                 return list_create_false();
             }
             switch(symbol->type) {
+                case SYM_LIST:
+                    new_list = list_duplicate(symbol->d.ptr);
+                    return new_list;
                 case SYM_PROPERTY:
                 case SYM_CONSTANT:
                     new_list = list_create();
