@@ -64,6 +64,8 @@
 #define T_STRING  2
 #define T_INTEGER 3
 #define T_VOCAB   4
+#define T_OBJECT_REF 5
+#define T_FUNCTION_REF 6
 
 #define T_OPEN    98
 #define T_CLOSE   99
@@ -81,6 +83,7 @@ typedef struct LIST {
     int type;
     int number;
     char *text;
+    void *ptr;
     struct LIST *child;
     struct LIST *last;
 
@@ -204,6 +207,7 @@ list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
 void list_freelist(list_t *lists);
 int list_size(list_t *list);
+int list_is_true(list_t *list);
 
 
 int object_contains(object_t *container, object_t *content);

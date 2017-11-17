@@ -133,6 +133,10 @@ list_t *list_duplicate(list_t *old_list) {
                 iter = iter->next;
             }
             break;
+        case T_OBJECT_REF:
+        case T_FUNCTION_REF:
+            new_list->ptr = old_list->ptr;
+            break;
         case T_STRING:
         case T_ATOM:
             new_list->text = str_dupl(old_list->text);
@@ -184,4 +188,23 @@ int list_size(list_t *list) {
         counter = counter->next;
     }
     return count;
+}
+
+int list_is_true(list_t *list) {
+    if (!list) {
+        return FALSE;
+    }
+
+    switch(list->type) {
+        case T_LIST:
+            return list->child != NULL;
+        case T_STRING:
+            return TRUE;
+        case T_ATOM:
+            return TRUE;
+        case T_INTEGER:
+            return list->number != 0;
+        default:
+            return FALSE;
+    }
 }

@@ -23,6 +23,12 @@ static list_t* builtin_vocab(gamedata_t *gd, symboltable_t *locals, list_t *args
 static list_t* builtin_log(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static void builtin_log_helper(gamedata_t *gd, symboltable_t *locals, list_t *list);
 static list_t* builtin_say(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_list(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_quote(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_if(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_prop_has(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_proc(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -34,6 +40,12 @@ static funcdef_t builtin_funcs[] = {
     { "vocab", TRUE, builtin_vocab },
     { "log", FALSE, builtin_log },
     { "say", TRUE, builtin_say },
+    { "list", TRUE, builtin_list },
+    { "quote", FALSE, builtin_quote },
+    { "if", FALSE, builtin_if },
+    { "prop-has", TRUE, builtin_prop_has },
+    { "prop-get", TRUE, builtin_prop_get },
+    { "proc", TRUE, builtin_proc },
     { NULL }
 };
 
@@ -74,12 +86,22 @@ list_t *list_evaluate(gamedata_t *gd, symboltable_t *locals, list_t *list) {
                 symbol = symbol_get(gd->symbols, list->text);
             }
             if (!symbol) {
-                debug_out("undefined value %s\n", list->text);
+                debug_out("list_evaluate: undefined value %s\n", list->text);
                 return list_create_false();
             }
             switch(symbol->type) {
                 case SYM_LIST:
                     new_list = list_duplicate(symbol->d.ptr);
+                    return new_list;
+                case SYM_OBJECT:
+                    new_list = list_create();
+                    new_list->type = T_OBJECT_REF;
+                    new_list->ptr = symbol->d.ptr;
+                    return new_list;
+                case SYM_FUNCTION:
+                    new_list = list_create();
+                    new_list->type = T_FUNCTION_REF;
+                    new_list->ptr = symbol->d.ptr;
                     return new_list;
                 case SYM_PROPERTY:
                 case SYM_CONSTANT:
@@ -135,6 +157,9 @@ int is_defined(gamedata_t *gd, symboltable_t *locals, list_t *atom) {
 list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list) {
     if (!gd || !list) {
         return NULL;
+    }
+    if (!list->child) {
+        return list_create();
     }
     if (list->child->type != T_ATOM) {
         debug_out("Tried to run list, but list did not start with atom.\n");
@@ -315,6 +340,12 @@ void builtin_log_helper(gamedata_t *gd, symboltable_t *locals, list_t *list) {
         case T_INTEGER:
             debug_out(" %d", list->number);
             break;
+        case T_OBJECT_REF:
+            debug_out(" [object@%p]", list->ptr);
+            break;
+        case T_FUNCTION_REF:
+            debug_out(" [function@%p]", list->ptr);
+            break;
         default:
             debug_out(" [unsupported list type %d]", list->type);
     }
@@ -327,6 +358,9 @@ list_t* builtin_say(gamedata_t *gd, symboltable_t *locals, list_t *args) {
     list_t *list = args->child;
     while (list) {
         switch(list->type) {
+            case T_OBJECT_REF:
+                object_name_print(gd, list->ptr);
+                break;
             case T_STRING:
                 text_out("%s", list->text);
                 break;
@@ -341,3 +375,100 @@ list_t* builtin_say(gamedata_t *gd, symboltable_t *locals, list_t *args) {
     return list_create_false();
 }
 
+list_t* builtin_list(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    return list_duplicate(args);
+}
+
+list_t* builtin_quote(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        return list_create();
+    } else {
+        if (args->child->next) {
+            debug_out("builtin_quote: extraneous arguments provided.\n");
+        }
+        return list_duplicate(args->child);
+    }
+}
+
+list_t* builtin_if(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        debug_out("builtin_if: no condition supplied.\n");
+        return list_create_false();
+    }
+    list_t *result = list_evaluate(gd, locals, args->child);
+    int is_true = list_is_true(result);
+    list_free(result);
+
+    list_t *good = args->child->next;
+    if (is_true) {
+        if (good) {
+            result = list_evaluate(gd, locals, good);
+        } else {
+            result = list_create_true();
+        }
+    } else {
+        if (good && good->next) {
+            result = list_evaluate(gd, locals, good->next);
+        } else {
+            result = list_create_false();
+        }
+    }
+    return result;
+}
+
+static list_t* builtin_prop_has(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        return list_create_false();
+    }
+    object_t *object = args->child->ptr;
+
+    if (!args->child->next || args->child->next->type != T_INTEGER) {
+        return list_create_false();
+    }
+    int prop_id = args->child->next->number;
+
+    property_t *property = object_property_get(object, prop_id);
+    if (property) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        return list_create_false();
+    }
+    object_t *object = args->child->ptr;
+
+    if (!args->child->next || args->child->next->type != T_INTEGER) {
+        return list_create_false();
+    }
+    int prop_id = args->child->next->number;
+
+    property_t *property = object_property_get(object, prop_id);
+    list_t *result = NULL;
+    switch(property->value.type) {
+        case PT_STRING:
+            result = list_create();
+            result->type = T_STRING;
+            result->text = str_dupl(property->value.d.ptr);
+            return result;
+        case PT_INTEGER:
+            result = list_create();
+            result->type = T_INTEGER;
+            result->number = property->value.d.num;
+            return result;
+        default:
+            debug_out("builtin_prop_get: unknown property type %d\n", property->value.type);
+            return list_create_false();
+    }
+}
+/*
+#define PT_OBJECT 2
+#define PT_ARRAY 3
+*/
+
+static list_t* builtin_proc(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    return list_duplicate(args->last);
+}
