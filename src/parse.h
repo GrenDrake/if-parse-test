@@ -121,6 +121,7 @@ typedef struct GRAMMAR {
 
 typedef struct ACTION {
     int action_code;
+    function_t *action_func;
     const char *action_name;
     grammar_t grammar[GT_MAX_TOKENS];
 
@@ -172,6 +173,7 @@ typedef struct COMMAND_INPUT {
     cmd_token_t words[MAX_INPUT_WORDS];
 
     int action;
+    function_t *action_func;
     unsigned noun_count;
     noun_t *nouns[PARSE_MAX_NOUNS];
 } input_t;

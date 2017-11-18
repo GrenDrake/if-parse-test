@@ -182,14 +182,11 @@ int parse_action(gamedata_t *gd, list_t *list) {
 
     list_t *cur = list->child->next;
     action_t *act = calloc(sizeof(action_t), 1);
-    if (cur->type == T_INTEGER) {
-        act->action_code = cur->number;
-        act->action_name = NULL;
-    } else if (cur->type == T_ATOM) {
+    if (cur->type == T_ATOM) {
         act->action_code = 0;
         act->action_name = str_dupl(cur->text);
     } else {
-        text_out("Action number must be integer or atom.\n");
+        text_out("Action number must be atom.\n");
         return 0;
     }
 
@@ -686,7 +683,12 @@ int fix_references(gamedata_t *gd) {
             if (!symbol) {
                 text_out("Action code contains unknown symbol %s.\n", cura->action_name);
             }
-            cura->action_code = symbol->d.value;
+            if (symbol->type == SYM_FUNCTION) {
+                cura->action_func = symbol->d.ptr;
+                cura->action_code = 9999;
+            } else {
+                cura->action_code = symbol->d.value;
+            }
             free((void*)cura->action_name);
             cura->action_name = NULL;
         }

@@ -120,6 +120,21 @@ void print_location(gamedata_t *gd, object_t *location) {
  * ****************************************************************************/
 int dispatch_action(gamedata_t *gd, input_t *input) {
     switch(input->action) {
+        case 9999:
+            {
+                function_t *func = input->action_func;
+                list_t *args = list_create();
+                if (input->nouns[0]) {
+                    list_t *noun = list_create();
+                    noun->type = T_OBJECT_REF;
+                    noun->ptr = input->nouns[0]->object;
+                    list_add(args, noun);
+                } else {
+                    list_create_false();
+                }
+                list_run_function(gd, func, args);
+            }
+            return 1;
         case ACT_QUIT:
             quit_sub(gd, input);
             return 1;
@@ -142,7 +157,7 @@ int dispatch_action(gamedata_t *gd, input_t *input) {
             putin_sub(gd, input);
             return 1;
         case ACT_EXAMINE:
-            examine_sub(gd, input);
+//            examine_sub(gd, input);
             return 1;
         case ACT_DUMPOBJ:
             dumpobj_sub(gd, input);

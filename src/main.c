@@ -292,12 +292,14 @@ int parse(gamedata_t *gd, input_t *input) {
 
     int best_result_end_word = 0;
     int best_result = PARSE_BADTOKEN;
+    function_t *best_function = NULL;
     while (action_iter && best_result < 0) {
         input->cur_word = input->next_cmd;
         int result = try_parse_action(gd, input, action_iter);
         if (best_result < result) {
             best_result = result;
             best_result_end_word = input->cur_word;
+            best_function = action_iter->action_func;
         }
         if (result >= 0) {
             break;
@@ -345,6 +347,7 @@ int parse(gamedata_t *gd, input_t *input) {
             text_out("Parser error.\n");
             break;
         default:
+            input->action_func = best_function;
             input->action = best_result;
     }
 
