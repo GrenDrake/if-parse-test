@@ -477,6 +477,9 @@ static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *a
     int prop_id = args->child->next->number;
 
     property_t *property = object_property_get(object, prop_id);
+    if (!property) {
+        return list_create_false();
+    }
     list_t *result = NULL;
     switch(property->value.type) {
         case PT_STRING:
