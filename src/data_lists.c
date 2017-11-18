@@ -58,6 +58,12 @@ void dump_list(FILE *dest, list_t *list) {
         case T_VOCAB:
             fprintf(dest, "<%d>", list->number);
             break;
+        case T_OBJECT_REF:
+            fprintf(dest, "object@%p", list->ptr);
+            break;
+        case T_FUNCTION_REF:
+            fprintf(dest, "function@%p", list->ptr);
+            break;
         default:
             fprintf(dest, "[%d: unhandled]", list->type);
     }
@@ -198,12 +204,13 @@ int list_is_true(list_t *list) {
     switch(list->type) {
         case T_LIST:
             return list->child != NULL;
-        case T_STRING:
-            return TRUE;
-        case T_ATOM:
-            return TRUE;
         case T_INTEGER:
             return list->number != 0;
+        case T_STRING:
+        case T_ATOM:
+        case T_OBJECT_REF:
+        case T_FUNCTION_REF:
+            return TRUE;
         default:
             return FALSE;
     }
