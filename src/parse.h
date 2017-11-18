@@ -186,6 +186,7 @@ typedef struct GAMEDATA {
     object_t *player;
     symboltable_t *symbols;
 
+    int game_loaded;
     int quit_game;
     int search_count;
     object_t *search[PARSE_MAX_OBJS];

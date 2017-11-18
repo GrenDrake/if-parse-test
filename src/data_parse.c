@@ -523,6 +523,7 @@ gamedata_t* load_data() {
 
     debug_out("load_data: finalizing loaded data\n");
     vocab_build();
+    gd->game_loaded = TRUE;
     if (!fix_references(gd)) {
         debug_out("load_data: failed to update references\n");
         free_data(gd);
