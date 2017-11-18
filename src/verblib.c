@@ -209,12 +209,12 @@ void drop_sub(gamedata_t *gd, input_t *input) {
 
 void move_sub(gamedata_t *gd, input_t *input) {
     property_t *p = object_property_get(input->nouns[0]->object, property_number(gd, "#dir-prop"));
-    if (!p || p->value.type != PT_STRING) {
+    if (!p || p->value.type != PT_INTEGER) {
         text_out("Malformed direction.\n");
         return;
     }
 
-    property_t *prop = object_property_get(gd->player->parent, property_number(gd, (char*)p->value.d.ptr));
+    property_t *prop = object_property_get(gd->player->parent, p->value.d.num);
     if (prop) {
         if (prop->value.type == PT_OBJECT) {
             object_move(gd->player, prop->value.d.ptr);

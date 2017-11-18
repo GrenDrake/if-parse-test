@@ -93,8 +93,8 @@
     description "Rurnips are a kind of root vegtable.")
 
 (object compass -)
-(object - compass name "north" vocab (<n> <north>) dir-prop "#north")
-(object - compass name "south" vocab (<s> <south>) dir-prop "#south")
-(object - compass name "east"  vocab (<e> <east>)  dir-prop "#east")
-(object - compass name "west"  vocab (<w> <west>)  dir-prop "#west")
+(object - compass name "north" vocab (<n> <north>) dir-prop #north)
+(object - compass name "south" vocab (<s> <south>) dir-prop #south)
+(object - compass name "east"  vocab (<e> <east>)  dir-prop #east)
+(object - compass name "west"  vocab (<w> <west>)  dir-prop #west)
 
