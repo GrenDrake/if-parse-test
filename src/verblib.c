@@ -124,13 +124,16 @@ int dispatch_action(gamedata_t *gd, input_t *input) {
             {
                 function_t *func = input->action_func;
                 list_t *args = list_create();
-                if (input->nouns[0]) {
+
+                for (int i = 0; i < PARSE_MAX_NOUNS; ++i) {
+                    if (input->nouns[i]) {
                     list_t *noun = list_create();
                     noun->type = T_OBJECT_REF;
-                    noun->ptr = input->nouns[0]->object;
+                        noun->ptr = input->nouns[i]->object;
                     list_add(args, noun);
                 } else {
-                    list_create_false();
+                        list_add(args, list_create_false());
+                    }
                 }
                 list_run_function(gd, func, args);
             }
