@@ -278,6 +278,7 @@ void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
 void print_list_vert(gamedata_t *gd, object_t *parent_obj);
 void print_location(gamedata_t *gd, object_t *location);
 
+list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args);
 list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list);
 
 #endif // PARSE_H
