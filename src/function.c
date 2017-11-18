@@ -29,6 +29,14 @@ static list_t* builtin_if(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_prop_has(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_proc(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_parent(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_bold(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_normal(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_reverse(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_prop_true(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_or(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_and(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_not(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -46,6 +54,14 @@ static funcdef_t builtin_funcs[] = {
     { "prop-has", TRUE, builtin_prop_has },
     { "prop-get", TRUE, builtin_prop_get },
     { "proc", TRUE, builtin_proc },
+    { "parent", TRUE, builtin_parent },
+    { "bold", TRUE, builtin_bold },
+    { "normal", TRUE, builtin_normal },
+    { "reverse", TRUE, builtin_reverse },
+    { "prop-true", TRUE, builtin_prop_true },
+    { "or", TRUE, builtin_or },
+    { "and", TRUE, builtin_and },
+    { "not", TRUE, builtin_not },
     { NULL }
 };
 
@@ -471,4 +487,102 @@ static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *a
 
 static list_t* builtin_proc(gamedata_t *gd, symboltable_t *locals, list_t *args) {
     return list_duplicate(args->last);
+}
+
+static list_t* builtin_parent(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        debug_out("builtin_parent: called without argument\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_parent: called with non-object\n");
+        return list_create_false();
+    }
+
+    object_t *object = args->child->ptr;
+    list_t *result = list_create();
+    result->type = T_OBJECT_REF;
+    if (object->parent) {
+        result->ptr = object->parent;
+    } else {
+        result->ptr = gd->root;
+    }
+    return result;
+}
+
+list_t* builtin_bold(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    list_t *result = list_create();
+    result->type = T_STRING;
+    result->text = str_dupl("\x1b[1m");
+    return result;
+}
+
+list_t* builtin_normal(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    list_t *result = list_create();
+    result->type = T_STRING;
+    result->text = str_dupl("\x1b[0m");
+    return result;
+}
+
+list_t* builtin_reverse(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    list_t *result = list_create();
+    result->type = T_STRING;
+    result->text = str_dupl("\x1b[7m");
+    return result;
+}
+
+list_t* builtin_prop_true(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || !args->child->next) {
+        debug_out("builtin_prop_true: called with insufficent argument\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_prop_true: called with non-object\n");
+        return list_create_false();
+    }
+    if (args->child->next->type != T_INTEGER) {
+        debug_out("builtin_prop_true: called with non-integer\n");
+        return list_create_false();
+    }
+
+    int raw_result = object_property_is_true(args->child->ptr, args->child->next->number, 0);
+
+    if (raw_result) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_or(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    list_t *iter = args->child;
+    while (iter) {
+        if (list_is_true(iter)) {
+            return list_create_true();
+        }
+        iter = iter->next;
+    }
+    return list_create_false();
+}
+list_t* builtin_and(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    list_t *iter = args->child;
+    while (iter) {
+        if (!list_is_true(iter)) {
+            return list_create_false();
+        }
+        iter = iter->next;
+    }
+    return list_create_true();
+}
+list_t* builtin_not(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        return list_create_false();
+    }
+    if (list_is_true(args->child)) {
+        return list_create_false();
+    } else {
+        return list_create_true();
+    }
 }
