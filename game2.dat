@@ -12,21 +12,52 @@
     player player
     intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!")
 
+(function print-name (obj)
+    (proc
+        (if obj
+            (if (not (or (prop-true obj #is-proper) (prop-true obj #is-room)))
+                (if (prop-has obj #article)
+                    (say (prop-get obj #article))
+                    (say "a "))
+                (say (prop-get obj #name)))
+            (say "(nothing)"))))
+
+
+(function print-location ()
+    (proc
+        (say (bold) "** ")
+        (print-name (parent player))
+        (say " **\n")
+        (say (normal) (prop-get (parent player) #description) "\n\nYou can see: ")
+        (say ".\n")))
+
 (function verb-examine (noun)
     (if (prop-has noun #description)
         (say (prop-get noun #description) "\n")
         (say "It looks as expected.\n")))
 
+(function verb-look ()
+    (print-location))
+
+(function verb-move (noun)
+    (proc
+        (set "target" (prop-get (parent player) (prop-get noun #dir-prop)))
+        (if target
+            (proc
+                (object-move player target)
+                (print-location))
+            (say "You can't go that way.\n"))))
+
 (action act-quit (<q> <quit>))
 (action act-take (<get> <take>) noun)
 (action act-drop <drop> noun)
-(action act-move scope compass)
-(action act-move (<go> <travel> <move>) scope compass)
+(action verb-move scope compass)
+(action verb-move (<go> <travel> <move>) scope compass)
 (action act-inv  (<inv> <i> <inventory>))
 (action act-inv  (<inv> <i> <inventory>) (<tall> <wide>))
-(action act-look (<look> <l>))
+(action verb-look (<look> <l>))
 (action act-put <put> noun (<on> <in>) noun)
-(action act-examine (<x> <examine>) noun)
-(action act-examine <look> <at> noun)
-(action act-examine <what> (<is> <are>) scope topics)
+(action verb-examine (<x> <examine>) noun)
+(action verb-examine <look> <at> noun)
+(action verb-examine <what> (<is> <are>) scope topics)
 (action act-dumpobj <dump> noun)
