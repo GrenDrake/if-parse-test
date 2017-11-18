@@ -52,7 +52,7 @@ object_t *object_get_by_ident(gamedata_t *gd, const char *ident) {
 int property_number(gamedata_t *gd, const char *name) {
     static int next_id = 1;
     symbol_t *symbol = symbol_get(gd->symbols, name);
-    if (!symbol) {
+    if (!symbol && !gd->game_loaded) {
         symbol = calloc(sizeof(symbol_t), 1);
         symbol->name = str_dupl(name);
         symbol->type = SYM_PROPERTY;

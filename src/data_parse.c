@@ -650,12 +650,16 @@ int fix_references(gamedata_t *gd) {
         while (p) {
             property_t *next = p->next;
             if (p->value.type == PT_TMPNAME) {
-                object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
-                if (!obj) {
-                    text_out("fix_references: undefined reference to %s.\n", (char*)p->value.d.ptr);
-                    return 0;
+                if (((char*)p->value.d.ptr)[0] == '#') {
+                    object_property_add_integer(curo, p->id, property_number(gd, p->value.d.ptr));
+                } else {
+                    object_t *obj = object_get_by_ident(gd, p->value.d.ptr);
+                    if (!obj) {
+                        text_out("fix_references: undefined reference to %s.\n", (char*)p->value.d.ptr);
+                        return 0;
+                    }
+                    object_property_add_object(curo, p->id, obj);
                 }
-                object_property_add_object(curo, p->id, obj);
             } else if (p->value.type == PT_TMPVOCAB) {
                 int vocab_num = vocab_index(p->value.d.ptr);
                 free(p->value.d.ptr);
