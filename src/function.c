@@ -492,6 +492,11 @@ static list_t* builtin_prop_get(gamedata_t *gd, symboltable_t *locals, list_t *a
             result->type = T_INTEGER;
             result->number = property->value.d.num;
             return result;
+        case PT_OBJECT:
+            result = list_create();
+            result->type = T_OBJECT_REF;
+            result->ptr = property->value.d.ptr;
+            return result;
         default:
             debug_out("builtin_prop_get: unknown property type %d\n", property->value.type);
             return list_create_false();
