@@ -7,7 +7,7 @@
     south "The door is locked.\n"
     doors 6
     junk (bedroom 54342 "gjires" )
-
+    is-room 1
 )
 (object - entryway
     name "table"
@@ -36,6 +36,7 @@
     name "Kitchen"
     description "A well appointed kitchen, suitable for even the finest tastes."
     south entryway
+    is-room 1
 )
 (object - kitchen
     name "apricot"
@@ -52,6 +53,7 @@
     name "Bedroom"
     description "A simple bedroom with a cot visible."
     east entryway
+    is-room 1
 )
 (object - bedroom
     name "cot"
