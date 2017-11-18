@@ -37,6 +37,10 @@ static list_t* builtin_prop_true(gamedata_t *gd, symboltable_t *locals, list_t *
 static list_t* builtin_or(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_and(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_not(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_sibling(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_child(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_set(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -62,8 +66,18 @@ static funcdef_t builtin_funcs[] = {
     { "or", TRUE, builtin_or },
     { "and", TRUE, builtin_and },
     { "not", TRUE, builtin_not },
+    { "sibling", TRUE, builtin_sibling },
+    { "child", TRUE, builtin_child },
+    { "set", TRUE, builtin_set },
+    { "object-move", TRUE, builtin_object_move },
     { NULL }
 };
+
+object_t* list_to_object(list_t *list) {
+    if (!list) return NULL;
+    if (list->type != T_OBJECT_REF) return NULL;
+    return list->ptr;
+}
 
 list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args) {
     symboltable_t *locals = symboltable_create();
@@ -585,4 +599,89 @@ list_t* builtin_not(gamedata_t *gd, symboltable_t *locals, list_t *args) {
     } else {
         return list_create_true();
     }
+}
+
+list_t* builtin_sibling(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        debug_out("builtin_sibling: called without argument\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_sibling: called with non-object\n");
+        return list_create_false();
+    }
+
+    object_t *object = args->child->ptr;
+    list_t *result;
+    if (object->sibling) {
+        result = list_create();
+        result->type = T_OBJECT_REF;
+        result->ptr = object->sibling;
+    } else {
+        result = list_create_false();
+    }
+    return result;
+}
+
+list_t* builtin_child(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        debug_out("builtin_child: called without argument\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_child: called with non-object\n");
+        return list_create_false();
+    }
+
+    object_t *object = args->child->ptr;
+    list_t *result;
+    if (object->first_child) {
+        result = list_create();
+        result->type = T_OBJECT_REF;
+        result->ptr = object->first_child;
+    } else {
+        result = list_create_false();
+    }
+    return result;
+}
+
+list_t* builtin_set(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || !args->child->next) {
+        debug_out("builtin_set: called with insufficent arguments\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != T_STRING) {
+        debug_out("builtin_set: called with insufficent arguments\n");
+        return list_create_false();
+    }
+    char *name = args->child->text;
+
+    list_t *value = list_duplicate(args->child->next);
+    symbol_add_ptr(locals, name, SYM_LIST, value);
+    return list_create_true();
+}
+
+list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        debug_out("builtin_move: called without argument\n");
+        return list_create_false();
+    }
+    object_t *object = list_to_object(args->child);
+    object_t *new_parent;
+    if (!args->child->next) {
+        new_parent = gd->root;
+    } else {
+        new_parent = list_to_object(args->child->next);
+    }
+
+    if (!object || !new_parent) {
+        debug_out("builtin_move: called with bad objects\n");
+        return list_create_false();
+    }
+
+    object_move(object, new_parent);
+    return list_create_true();
 }
