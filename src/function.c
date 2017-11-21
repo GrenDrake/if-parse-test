@@ -43,6 +43,7 @@ static list_t* builtin_set(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_contains(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_contains_indirect(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_eq(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -72,6 +73,9 @@ static funcdef_t builtin_funcs[] = {
     { "child", TRUE, builtin_child },
     { "set", TRUE, builtin_set },
     { "object-move", TRUE, builtin_object_move },
+    { "contains", TRUE, builtin_contains },
+    { "indirectly-contains", TRUE, builtin_contains_indirect },
+    { "eq", TRUE, builtin_eq },
     { NULL }
 };
 
@@ -740,3 +744,26 @@ static list_t* builtin_contains_indirect(gamedata_t *gd, symboltable_t *locals, 
     }
 }
 
+static list_t* builtin_eq(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || !args->child->next) {
+        debug_out("builtin_eq: insufficent arguments\n");
+        return list_create_false();
+    }
+
+    if (args->child->type != args->child->next->type) {
+        return list_create_false();
+    }
+
+    switch(args->child->type) {
+        case T_STRING:
+            return list_create_bool(strcmp(args->child->text, args->child->next->text) == 0);
+        case T_INTEGER:
+            return list_create_bool(args->child->number == args->child->next->number);
+        case T_OBJECT_REF:
+        case T_FUNCTION_REF:
+            return list_create_bool(args->child->ptr == args->child->next->ptr);
+        default:
+            debug_out("builtin_eq: unhandled list type %d\n", args->child->type);
+            return list_create_false();
+    }
+}
