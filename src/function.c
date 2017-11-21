@@ -41,6 +41,8 @@ static list_t* builtin_sibling(gamedata_t *gd, symboltable_t *locals, list_t *ar
 static list_t* builtin_child(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_set(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_contains(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_contains_indirect(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -693,3 +695,48 @@ list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args)
     object_move(object, new_parent);
     return list_create_true();
 }
+
+    object_move(object, new_parent);
+    return list_create_true();
+}
+
+static list_t* builtin_contains(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_contains: first argument must be object\n");
+        return list_create_false();
+    }
+    if (!args->child->next || args->child->next->type != T_OBJECT_REF) {
+        debug_out("builtin_contains: second argument must be object\n");
+        return list_create_false();
+    }
+
+    object_t *o1 = args->child->ptr;
+    object_t *o2 = args->child->next->ptr;
+
+    if (object_contains(o1, o2)) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+static list_t* builtin_contains_indirect(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_contains_indirect: first argument must be object\n");
+        return list_create_false();
+    }
+    if (!args->child->next || args->child->next->type != T_OBJECT_REF) {
+        debug_out("builtin_contains_indirect: second argument must be object\n");
+        return list_create_false();
+    }
+
+    object_t *o1 = args->child->ptr;
+    object_t *o2 = args->child->next->ptr;
+
+    if (object_contains_indirect(o1, o2)) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
