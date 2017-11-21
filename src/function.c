@@ -700,10 +700,6 @@ list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t *args)
     return list_create_true();
 }
 
-    object_move(object, new_parent);
-    return list_create_true();
-}
-
 static list_t* builtin_contains(gamedata_t *gd, symboltable_t *locals, list_t *args) {
     if (!args->child || args->child->type != T_OBJECT_REF) {
         debug_out("builtin_contains: first argument must be object\n");
