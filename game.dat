@@ -1,3 +1,8 @@
+(object gameinfo -
+    player player
+    intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!\n")
+
+
 
 (object entryway -
     name "Entryway"
@@ -9,14 +14,14 @@
     junk (bedroom 54342 "gjires" )
     is-room 1
 )
-(object - entryway
+(object the-table entryway
     name "table"
     description "A small, unsteady table."
     vocab ( <table> )
-    is-takable 0
+    is-fixed 1
     is-container 1
 )
-(object - entryway
+(object the-chair entryway
     name "chair"
     vocab ( <chair> )
 )
@@ -27,7 +32,7 @@
 (object - entryway
     name "fireplace"
     vocab ( <fireplace> <fire> <place> )
-    is-takable 0
+    is-fixed 1
     is-container 1
 )
 
@@ -58,12 +63,13 @@
 (object - bedroom
     name "cot"
     vocab ( <bed> <cot> )
-    is-takable 0
+    is-fixed 1
 )
 
 (object player entryway
     name "yourself"
     is-proper 1
+    no-display 1
     vocab ( <me> <self> )
 )
 
@@ -81,7 +87,7 @@
     name "orange umbrella"
     vocab ( <orange> <umbrella> )
 )
-(object - player
+(object glass-box player
     name "glass box"
     vocab ( <glass> <box> )
     is-container 1

@@ -204,9 +204,10 @@ void token_freelist(token_t *tokens);
 
 void list_add(list_t *list, list_t *item);
 list_t *list_create();
-list_t *list_create_false();
-list_t *list_create_true();
 list_t *list_create_bool(int value);
+list_t *list_create_false();
+list_t *list_create_string(const char *text);
+list_t *list_create_true();
 list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
 void list_freelist(list_t *lists);
@@ -280,6 +281,7 @@ void print_list_vert_core(gamedata_t *gd, object_t *parent_obj, int depth);
 void print_list_vert(gamedata_t *gd, object_t *parent_obj);
 void print_location(gamedata_t *gd, object_t *location);
 
+list_t *list_run_function_noargs(gamedata_t *gd, function_t *func);
 list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args);
 list_t *list_run(gamedata_t *gd, symboltable_t *locals, list_t *list);
 

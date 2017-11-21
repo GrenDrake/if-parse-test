@@ -111,6 +111,13 @@ list_t *list_create() {
     return list;
 }
 
+list_t *list_create_bool(int value) {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_INTEGER;
+    list->number = value ? 1 : 0;
+    return list;
+}
+
 list_t *list_create_false() {
     list_t *list = calloc(sizeof(list_t), 1);
     list->type = T_INTEGER;
@@ -118,17 +125,17 @@ list_t *list_create_false() {
     return list;
 }
 
+list_t *list_create_string(const char *text) {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_STRING;
+    list->text = str_dupl(text);
+    return list;
+}
+
 list_t *list_create_true() {
     list_t *list = calloc(sizeof(list_t), 1);
     list->type = T_INTEGER;
     list->number = 1;
-    return list;
-}
-
-list_t *list_create_bool(int value) {
-    list_t *list = calloc(sizeof(list_t), 1);
-    list->type = T_INTEGER;
-    list->number = value ? 1 : 0;
     return list;
 }
 

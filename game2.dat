@@ -1,16 +1,30 @@
-(constant act-quit 0)
-(constant act-take 1)
-(constant act-drop 2)
-(constant act-move 3)
-(constant act-inv  4)
-(constant act-look 5)
-(constant act-put  6)
-(constant act-examine 7)
-(constant act-dumpobj 8)
 
-(object gameinfo -
-    player player
-    intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!")
+(function next-visible-obj (after-obj)
+    (if (sibling after-obj)
+        (if (prop-get (sibling after-obj) #no-display)
+            (next-visible-obj (sibling after-obj))
+            (sibling after-obj))))
+(function do-list-horz (for-obj)
+    (proc
+        (if (prop-get for-obj #no-display)
+            (set "for-obj" (next-visible-obj for-obj)))
+        (if for-obj
+            (proc
+                (say for-obj)
+                (if (child for-obj)
+                    (proc
+                        (say " (containing ")
+                        (do-list-horz (child for-obj))
+                        (say ")")
+                        ))
+                (set "next-obj" (next-visible-obj for-obj))
+                (if next-obj
+                    (proc
+                        (say ", ")
+                        (if (not (next-visible-obj next-obj))
+                            (say "and "))
+                        (do-list-horz next-obj))))
+            (say "nothing"))))
 
 (function print-name (obj)
     (proc
@@ -22,19 +36,50 @@
                 (say (prop-get obj #name)))
             (say "(nothing)"))))
 
-
 (function print-location ()
     (proc
         (say (bold) "** ")
         (print-name (parent player))
         (say " **\n")
         (say (normal) (prop-get (parent player) #description) "\n\nYou can see: ")
+        (do-list-horz (child (parent player)))
         (say ".\n")))
+
+
+
+
+(function verb-close (noun)
+    (if (not (prop-has noun #is-open))
+        (say "Not closable.\n")
+        (if (not (prop-get noun #is-open))
+            (say "Already closed.\n")
+            (proc
+                (prop-set noun #is-open 0)
+                (say "Closed.\n")))))
+
+(function verb-drop (noun)
+    (if (eq player noun)
+        (say "Cannot drop yourself.\n")
+        (if (indirectly-contains player noun)
+            (proc
+                (object-move noun (parent player))
+                (say "Dropped.\n"))
+            (say "Not carried.\n"))))
+
+(function verb-dumpobj (noun)
+    (dump-obj noun))
 
 (function verb-examine (noun)
     (if (prop-has noun #description)
         (say (prop-get noun #description) "\n")
         (say "It looks as expected.\n")))
+
+(function verb-inv ()
+    (proc
+        (say "You are carrying: ")
+        (do-list-horz (child player))
+        (say ".\n")
+        ))
 
 (function verb-look ()
     (print-location))
@@ -43,21 +88,67 @@
     (proc
         (set "target" (prop-get (parent player) (prop-get noun #dir-prop)))
         (if target
-            (proc
-                (object-move player target)
-                (print-location))
+            (if (is-string target)
+                (say target)
+                (proc
+                    (object-move player target)
+                    (print-location)))
             (say "You can't go that way.\n"))))
 
-(action act-quit (<q> <quit>))
-(action act-take (<get> <take>) noun)
-(action act-drop <drop> noun)
+(function verb-open (noun)
+    (if (not (prop-has noun #is-open))
+        (say "Not openable.\n")
+        (if (prop-get noun #is-open)
+            (say "Already open.\n")
+            (proc
+                (prop-set noun #is-open 1)
+                (say "Opened.\n")))))
+
+(function verb-put (noun second)
+    (proc
+        (if (or (eq noun player) (eq second player))
+            (say "Cannot put yourself somewhere.\n")
+            (if (not (indirectly-contains player noun))
+                (say "Not held.\n")
+                (if (contains second noun)
+                    (say "Already there.\n")
+                    (if (indirectly-contains noun second)
+                        (say "Impossible.\n")
+                        (if (not (prop-get second #is-container))
+                            (say "That can't contain things")
+                            (if (or (not (prop-has second #is-open)) (prop-get second #is-open))
+                                (proc
+                                    (object-move noun second)
+                                    (say "Done.\n"))
+                                (say "It's not open.\n")))))))))
+
+
+(function verb-take (noun)
+    (if (eq noun player)
+        (say "Cannot take yourself.\n")
+        (if (indirectly-contains player noun)
+            (say "Already taken.\n")
+            (if (prop-get noun #is-fixed)
+                (say "Impossible\n")
+                (proc
+                    (object-move noun player)
+                    (say "Taken.\n"))))))
+
+(function verb-quit ()
+    (request-quit))
+
+(action verb-quit (<q> <quit>))
+(action verb-take (<get> <take>) noun)
+(action verb-drop <drop> noun)
 (action verb-move scope compass)
 (action verb-move (<go> <travel> <move>) scope compass)
-(action act-inv  (<inv> <i> <inventory>))
-(action act-inv  (<inv> <i> <inventory>) (<tall> <wide>))
+(action verb-inv  (<inv> <i> <inventory>))
+(action verb-inv  (<inv> <i> <inventory>) <wide>)
 (action verb-look (<look> <l>))
-(action act-put <put> noun (<on> <in>) noun)
+(action verb-put <put> noun (<on> <in>) noun)
 (action verb-examine (<x> <examine>) noun)
 (action verb-examine <look> <at> noun)
 (action verb-examine <what> (<is> <are>) scope topics)
-(action act-dumpobj <dump> noun)
+(action verb-open <open> noun)
+(action verb-close (<close> <shut>) noun)
+(action verb-dumpobj <dump> noun)

@@ -44,6 +44,15 @@ static list_t* builtin_object_move(gamedata_t *gd, symboltable_t *locals, list_t
 static list_t* builtin_contains(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_contains_indirect(gamedata_t *gd, symboltable_t *locals, list_t *args);
 static list_t* builtin_eq(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_is_object(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_is_string(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_is_number(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_is_function(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_is_list(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_type_name(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_prop_set(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_request_quit(gamedata_t *gd, symboltable_t *locals, list_t *args);
+static list_t* builtin_dump_obj(gamedata_t *gd, symboltable_t *locals, list_t *args);
 
 
 static funcdef_t builtin_funcs[] = {
@@ -76,6 +85,15 @@ static funcdef_t builtin_funcs[] = {
     { "contains", TRUE, builtin_contains },
     { "indirectly-contains", TRUE, builtin_contains_indirect },
     { "eq", TRUE, builtin_eq },
+    { "is-object", TRUE, builtin_is_object },
+    { "is-string", TRUE, builtin_is_string },
+    { "is-number", TRUE, builtin_is_number },
+    { "is-function", TRUE, builtin_is_function },
+    { "is-list", TRUE, builtin_is_list },
+    { "type-name", TRUE, builtin_type_name },
+    { "prop-set", TRUE, builtin_prop_set },
+    { "request-quit", TRUE, builtin_request_quit },
+    { "dump-obj", TRUE, builtin_dump_obj },
     { NULL }
 };
 
@@ -83,6 +101,13 @@ object_t* list_to_object(list_t *list) {
     if (!list) return NULL;
     if (list->type != T_OBJECT_REF) return NULL;
     return list->ptr;
+}
+
+list_t *list_run_function_noargs(gamedata_t *gd, function_t *func) {
+    list_t *args = list_create();
+    list_t *result = list_run_function(gd, func, args);
+    list_free(args);
+    return result;
 }
 
 list_t *list_run_function(gamedata_t *gd, function_t *func, list_t *args) {
@@ -762,4 +787,107 @@ static list_t* builtin_eq(gamedata_t *gd, symboltable_t *locals, list_t *args) {
             debug_out("builtin_eq: unhandled list type %d\n", args->child->type);
             return list_create_false();
     }
+}
+
+list_t* builtin_is_object(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (args->child && args->child->type == T_OBJECT_REF) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_is_string(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (args->child && args->child->type == T_STRING) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_is_number(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (args->child && args->child->type == T_INTEGER) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_is_function(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (args->child && args->child->type == T_FUNCTION_REF) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_is_list(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (args->child && args->child->type == T_LIST) {
+        return list_create_true();
+    } else {
+        return list_create_false();
+    }
+}
+
+list_t* builtin_type_name(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child) {
+        return list_create_string("(nothing)");
+    }
+    switch(args->child->type) {
+        case T_STRING:      return list_create_string("string");
+        case T_INTEGER:     return list_create_string("number");
+        case T_LIST:        return list_create_string("list");
+        case T_OBJECT_REF:  return list_create_string("object");
+        case T_FUNCTION_REF:return list_create_string("function");
+        default:
+            debug_out("builtin_type_name: unhandled type %d\n");
+            return list_create_string("(unhandled)");
+    }
+}
+
+list_t* builtin_prop_set(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_prop_set: first argument must be object\n");
+        return list_create_false();
+    }
+    if (!args->child->next || args->child->next->type != T_INTEGER) {
+        debug_out("builtin_prop_set: second argument must be property number\n");
+        return list_create_false();
+    }
+    object_t *obj = args->child->ptr;
+    int pid = args->child->next->number;
+    list_t *new_value = args->child->next->next;
+
+    if (!new_value) {
+        object_property_delete(obj, pid);
+        return list_create_true();
+    }
+    switch(new_value->type) {
+        case T_STRING:
+            object_property_add_string(obj, pid, str_dupl(new_value->text));
+            return list_create_true();
+        case T_INTEGER:
+            object_property_add_integer(obj, pid, new_value->number);
+            return list_create_true();
+        case T_OBJECT_REF:
+            object_property_add_object(obj, pid, new_value->ptr);
+            return list_create_true();
+        default:
+            debug_out("builtin_prop_set: unhandled list type %d\n", new_value->type);
+            return list_create_false();
+    }
+}
+
+static list_t* builtin_request_quit(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    gd->quit_game = TRUE;
+    return list_create_true();
+}
+
+static list_t* builtin_dump_obj(gamedata_t *gd, symboltable_t *locals, list_t *args) {
+    if (!args->child || args->child->type != T_OBJECT_REF) {
+        debug_out("builtin_dump_obj: first argument must be object\n");
+        return list_create_false();
+    }
+    object_dump(gd, args->child->ptr);
+    return list_create_true();
 }
