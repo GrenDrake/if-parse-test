@@ -206,6 +206,7 @@ void list_add(list_t *list, list_t *item);
 list_t *list_create();
 list_t *list_create_false();
 list_t *list_create_true();
+list_t *list_create_bool(int value);
 list_t *list_duplicate(list_t *old_list);
 void list_free(list_t *list);
 void list_freelist(list_t *lists);

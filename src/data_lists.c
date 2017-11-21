@@ -125,6 +125,13 @@ list_t *list_create_true() {
     return list;
 }
 
+list_t *list_create_bool(int value) {
+    list_t *list = calloc(sizeof(list_t), 1);
+    list->type = T_INTEGER;
+    list->number = value ? 1 : 0;
+    return list;
+}
+
 list_t *list_duplicate(list_t *old_list) {
     if (!old_list) return NULL;
 
