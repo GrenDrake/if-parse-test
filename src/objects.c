@@ -220,6 +220,13 @@ property_t* object_property_get(object_t *obj, int pid) {
         cur = cur->next;
     }
 
+    if (pid != OBJPROP_PROTOTYPE) {
+        cur = object_property_get(obj, OBJPROP_PROTOTYPE);
+        if (cur && cur->value.type == PT_OBJECT) {
+            return object_property_get((object_t*)cur->value.d.ptr, pid);
+        }
+    }
+
     return NULL;
 }
 

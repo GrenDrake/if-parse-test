@@ -71,6 +71,7 @@
 #define T_CLOSE   99
 
 #define OBJPROP_INTERNAL_NAME   -1
+#define OBJPROP_PROTOTYPE       -2
 
 typedef struct TOKEN {
     int type;

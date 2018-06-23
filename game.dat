@@ -2,9 +2,12 @@
     player player
     intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!\n")
 
-
+(object room -
+    is-room 1
+)
 
 (object entryway -
+    prototype room
     name "Entryway"
     description "A short, square segment of hallway between the interior of the house and the exterior."
     north kitchen
@@ -12,7 +15,6 @@
     south "The door is locked.\n"
     doors 6
     junk (bedroom 54342 "gjires" )
-    is-room 1
 )
 (object the-table entryway
     name "table"
@@ -38,10 +40,10 @@
 
 
 (object kitchen -
+    prototype room
     name "Kitchen"
     description "A well appointed kitchen, suitable for even the finest tastes."
     south entryway
-    is-room 1
 )
 (object - kitchen
     name "apricot"
@@ -55,10 +57,10 @@
 
 
 (object bedroom -
+    prototype room
     name "Bedroom"
     description "A simple bedroom with a cot visible."
     east entryway
-    is-room 1
 )
 (object - bedroom
     name "cot"

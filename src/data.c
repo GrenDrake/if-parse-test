@@ -11,6 +11,7 @@ gamedata_t *gamedata_create() {
     gd->root = object_create(NULL);
     gd->symbols = symboltable_create();
     add_builtin_property(gd, "#internal-name", OBJPROP_INTERNAL_NAME);
+    add_builtin_property(gd, "#prototype", OBJPROP_PROTOTYPE);
     return gd;
 }
 
