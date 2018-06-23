@@ -70,6 +70,8 @@
 #define T_OPEN    98
 #define T_CLOSE   99
 
+#define OBJPROP_INTERNAL_NAME   -1
+
 typedef struct TOKEN {
     int type;
     int number;
@@ -252,6 +254,7 @@ gamedata_t* load_data();
 void free_data(gamedata_t *gd);
 object_t *object_get_by_ident(gamedata_t *gd, const char *ident);
 int property_number(gamedata_t *gd, const char *name);
+void add_builtin_property(gamedata_t *gd, const char *name, int pid);
 char *str_dupl(const char *text);
 char *str_dupl_left(const char *text, int size);
 void symbol_add_value(symboltable_t *table, const char *name, int type, int value);

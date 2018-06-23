@@ -10,6 +10,7 @@ gamedata_t *gamedata_create() {
     gamedata_t *gd = calloc(sizeof(gamedata_t), 1);
     gd->root = object_create(NULL);
     gd->symbols = symboltable_create();
+    add_builtin_property(gd, "#internal-name", OBJPROP_INTERNAL_NAME);
     return gd;
 }
 
@@ -61,6 +62,14 @@ int property_number(gamedata_t *gd, const char *name) {
     }
 
     return symbol->d.value;
+}
+
+void add_builtin_property(gamedata_t *gd, const char *name, int pid) {
+    symbol_t *symbol = calloc(sizeof(symbol_t), 1);
+    symbol->name = str_dupl(name);
+    symbol->type = SYM_PROPERTY;
+    symbol->d.value = pid;
+    symbol_add_core(gd->symbols, symbol);
 }
 
 char *str_dupl(const char *text) {

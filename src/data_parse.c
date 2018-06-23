@@ -383,8 +383,6 @@ int parse_object(gamedata_t *gd, list_t *list) {
         return 0;
     }
 
-    int ident_prop = property_number(gd, "#internal-name");
-
     object_t *obj = object_create(gd->root);
     list_t *prop = list->child->next;
     list_t *val  = prop->next;
@@ -393,7 +391,7 @@ int parse_object(gamedata_t *gd, list_t *list) {
         return 0;
     }
     if (strcmp(prop->text, "-") != 0) {
-        object_property_add_string(obj, ident_prop, str_dupl(prop->text));
+        object_property_add_string(obj, OBJPROP_INTERNAL_NAME, str_dupl(prop->text));
         symbol_add_ptr(gd->symbols, prop->text, SYM_OBJECT, obj);
     }
     if (strcmp(val->text, "-") != 0) {
