@@ -150,7 +150,7 @@ typedef struct OBJECT {
     int id;
     property_t *properties;
 
-    const char *parent_name;
+    const char *parent_name, *prototype_name;
 
     struct OBJECT *parent;
     struct OBJECT *first_child;

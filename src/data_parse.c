@@ -384,11 +384,15 @@ int parse_object(gamedata_t *gd, list_t *list) {
     }
 
     object_t *obj = object_create(gd->root);
-    list_t *prop = list->child->next;
+    list_t *prototype_name = list->child->next;
+    list_t *prop = prototype_name->next;
     list_t *val  = prop->next;
-    if (prop->type != T_ATOM || val->type != T_ATOM) {
-        text_out("Object name and parent must be atom.\n");
+    if (prototype_name->type != T_ATOM || prop->type != T_ATOM || val->type != T_ATOM) {
+        text_out("Object prototype, name, and parent must be atom.\n");
         return 0;
+    }
+    if (strcmp(prototype_name->text, "-") != 0) {
+        obj->prototype_name = str_dupl(prototype_name->text);
     }
     if (strcmp(prop->text, "-") != 0) {
         object_property_add_string(obj, OBJPROP_INTERNAL_NAME, str_dupl(prop->text));
@@ -642,6 +646,16 @@ int fix_references(gamedata_t *gd) {
             object_move(curo, parent);
             free((void*)curo->parent_name);
             curo->parent_name = NULL;
+        }
+        if (curo->prototype_name) {
+            object_t *prototype = object_get_by_ident(gd, curo->prototype_name);
+            if (!prototype) {
+                debug_out("fix_references: unknown object name %s.\n", curo->prototype_name);
+                return 0;
+            }
+            object_property_add_object(curo, OBJPROP_PROTOTYPE, prototype);
+            free((void*)curo->prototype_name);
+            curo->prototype_name = NULL;
         }
 
         property_t *p = curo->properties;

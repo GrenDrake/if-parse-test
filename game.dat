@@ -1,13 +1,12 @@
-(object gameinfo -
+(object - gameinfo -
     player player
     intro "You awaken in a strange house with no idea how you got there. Your head pounds with a headache, your throat is parched and desperate for a drink, and even your voice is strained.\n\nWhatever happened, best to find out quickly so it doesn't happen again!\n")
 
-(object room -
+(object - room -
     is-room 1
 )
 
-(object entryway -
-    prototype room
+(object room entryway -
     name "Entryway"
     description "A short, square segment of hallway between the interior of the house and the exterior."
     north kitchen
@@ -16,22 +15,22 @@
     doors 6
     junk (bedroom 54342 "gjires" )
 )
-(object the-table entryway
+(object - the-table entryway
     name "table"
     description "A small, unsteady table."
     vocab ( <table> )
     is-fixed 1
     is-container 1
 )
-(object the-chair entryway
+(object - the-chair entryway
     name "chair"
     vocab ( <chair> )
 )
-(object - entryway
+(object - - entryway
     name "painting"
     vocab ( <painting> )
 )
-(object - entryway
+(object - - entryway
     name "fireplace"
     vocab ( <fireplace> <fire> <place> )
     is-fixed 1
@@ -39,70 +38,68 @@
 )
 
 
-(object kitchen -
-    prototype room
+(object room kitchen -
     name "Kitchen"
     description "A well appointed kitchen, suitable for even the finest tastes."
     south entryway
 )
-(object - kitchen
+(object - - kitchen
     name "apricot"
     vocab ( <apricot> )
     article "an"
 )
-(object - kitchen
+(object - - kitchen
     name "turnip"
     vocab ( <turnip> )
 )
 
 
-(object bedroom -
-    prototype room
+(object room bedroom -
     name "Bedroom"
     description "A simple bedroom with a cot visible."
     east entryway
 )
-(object - bedroom
+(object - - bedroom
     name "cot"
     vocab ( <bed> <cot> )
     is-fixed 1
 )
 
-(object player entryway
+(object - player entryway
     name "yourself"
     is-proper 1
     no-display 1
     vocab ( <me> <self> )
 )
 
-(object - player
+(object - - player
     name "clear umbrella"
     vocab ( <clear> <umbrella> )
 )
 
-(object - player
+(object - - player
     name "black umbrella"
     vocab ( <black> <umbrella> )
 )
 
-(object - player
+(object - - player
     name "orange umbrella"
     vocab ( <orange> <umbrella> )
 )
-(object glass-box player
+(object - glass-box player
     name "glass box"
     vocab ( <glass> <box> )
     is-container 1
     is-open 0
 )
 
-(object topics -)
-(object - topics name "turnips" vocab (<turnip> <turnips>)
+(object - topics -)
+(object - - topics name "turnips" vocab (<turnip> <turnips>)
     description "Rurnips are a kind of root vegtable.")
 
-(object compass -)
-(object - compass name "north" vocab (<n> <north>) dir-prop #north)
-(object - compass name "south" vocab (<s> <south>) dir-prop #south)
-(object - compass name "east"  vocab (<e> <east>)  dir-prop #east)
-(object - compass name "west"  vocab (<w> <west>)  dir-prop #west)
+(object - compass -)
+(object - - compass name "north" vocab (<n> <north>) dir-prop #north)
+(object - - compass name "south" vocab (<s> <south>) dir-prop #south)
+(object - - compass name "east"  vocab (<e> <east>)  dir-prop #east)
+(object - - compass name "west"  vocab (<w> <west>)  dir-prop #west)
 
